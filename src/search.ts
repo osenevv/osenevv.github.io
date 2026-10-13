@@ -24,8 +24,6 @@ export type IndexStatus =
   | { kind: 'semantic' }
   | { kind: 'fallback'; reason: string };
 
-const MODEL = 'Xenova/all-MiniLM-L6-v2';
-const TRANSFORMERS_CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1';
 
 const STOPWORDS = new Set(
   'a an and are as at be but by for from has have i if in into is it its of on or so that the their then this to was we what when where which with you your my me not no can do does how than too very just about also more most only own same should will'.split(' '),
@@ -101,27 +99,24 @@ function tfidfEmbedder(corpus: string[]): Embedder {
   };
 }
 
-async function miniLmEmbedder(onProgress: (p: number) => void): Promise<Embedder> {
-  const { pipeline } = await import(/* @vite-ignore */ TRANSFORMERS_CDN);
-  const files = new Map<string, number>();
-  const extractor = await pipeline('feature-extraction', MODEL, {
-    dtype: 'q8',
-    progress_callback: (e: { status: string; file?: string; progress?: number }) => {
-      if (e.status === 'progress' && e.file) {
-        files.set(e.file, e.progress ?? 0);
-        onProgress(Math.min(...files.values()));
-      }
-    },
-  });
+function edgeEmbedder(): Embedder {
   return {
-    label: 'MiniLM-L6 · 384d',
+    label: 'Multilingual Semantic Vector API · 384d',
     threshold: 0.32,
-    async embed(texts) {
-      const out = await extractor(texts, { pooling: 'mean', normalize: true });
-      return (out.tolist() as number[][]).map((row) => Float32Array.from(row));
+    async embed(texts: string[]) {
+      const url = typeof window !== 'undefined' ? '/api/embed' : 'http://localhost:5173/api/embed';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texts }),
+      });
+      if (!res.ok) throw new Error(`Embedding API returned ${res.status}`);
+      const data = await res.json();
+      return (data.vectors as number[][]).map((row) => Float32Array.from(row));
     },
   };
 }
+
 
 export class VectorIndex {
   chunks: Chunk[];
@@ -140,6 +135,11 @@ export class VectorIndex {
   }
   get threshold() {
     return this.embedder?.threshold ?? 0.12;
+  }
+
+  async embed(texts: string[]): Promise<Float32Array[]> {
+    if (!this.embedder) return [];
+    return this.embedder.embed(texts);
   }
 
   onChange(fn: (s: IndexStatus) => void) {
@@ -198,12 +198,37 @@ export class VectorIndex {
 
   private async runSemanticUpgrade() {
     try {
-      this.setStatus({ kind: 'loading', progress: 0 });
-      const embedder = await miniLmEmbedder((p) => this.setStatus({ kind: 'loading', progress: p }));
-      await this.build(embedder);
+      this.setStatus({ kind: 'loading', progress: 0.1 });
+      const embedder = edgeEmbedder();
+
+      // Load precomputed vault vectors to avoid embedding all 95 chunks at runtime
+      let precomputed: number[][] | null = null;
+      try {
+        const vUrl = typeof window !== 'undefined' ? '/vault-vectors.json' : 'http://localhost:5173/vault-vectors.json';
+        const vRes = await fetch(vUrl);
+        if (vRes.ok) precomputed = await vRes.json();
+      } catch {
+        // Fall back to building vectors via API
+      }
+
+      if (precomputed && precomputed.length === this.chunks.length) {
+        const vectors = precomputed.map((row) => Float32Array.from(row));
+        const noteVectors = new Map<string, Float32Array>();
+        this.chunks.forEach((c, i) => {
+          const acc = noteVectors.get(c.noteId) ?? new Float32Array(vectors[i].length);
+          for (let d = 0; d < acc.length; d++) acc[d] += vectors[i][d];
+          noteVectors.set(c.noteId, acc);
+        });
+        noteVectors.forEach(normalize);
+        this.embedder = embedder;
+        this.vectors = vectors;
+        this.noteVectors = noteVectors;
+      } else {
+        await this.build(embedder);
+      }
       this.setStatus({ kind: 'semantic' });
     } catch (err) {
-      console.warn('Semantic model unavailable, staying on TF-IDF', err);
+      console.warn('Semantic API unavailable, staying on TF-IDF', err);
       this.setStatus({ kind: 'fallback', reason: String(err) });
     }
   }
