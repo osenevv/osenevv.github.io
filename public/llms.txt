@@ -1,0 +1,19 @@
+# Vladimir Osenev
+
+> AI engineer in Prague, CZ (remote-ready). Retrieval (RAG, embeddings, vector search), LLM evaluation and AI agents. Open to work. Speaks Russian, English and Czech. CS at Charles University.
+
+Contact: osenevvova@gmail.com · https://github.com/osenevv · https://linkedin.com/in/vosenev
+CV: /Vladimir_Osenev_CV.pdf
+
+## Projects
+- ZettelLinker (github.com/osenevv/zettlellinker): finds missing links in an Obsidian vault by meaning using local sentence-transformer embeddings; LangGraph pipeline; 0.38 ms median query over 10,000 vectors.
+- Yapper (github.com/osenevv/Yapper): macOS app turning voice notes into tasks and long-term memory; on-device transcription; CI on Python 3.10–3.12.
+- Mafia Tracker (github.com/osenevv/mafia-tracker): live tournament platform for 10-player Mafia; Django Channels WebSockets push game state to every screen; ratio-based Elo engine.
+- SatFreedom (github.com/osenevv/SatFreedom): private, watch-only Bitcoin savings journal; C#/.NET with Avalonia.
+- Personal Agentic Wiki: personal knowledge base maintained by LLM agents; this website is built from a slice of it.
+
+## Experience
+- Hegelmann Group (Jul 2026 – present): logistics specialist; built an LLM-powered agent workflow for lead collection and prospect-list preparation.
+- Outlier.AI (2025 – Jun 2026): AI Specialist (Evaluation & Alignment); audited multi-step chains of thought, steered RLHF preferences, and authored the production-grade Python reference code frontier models were trained to learn from.
+- ProfiFP (Summer 2022): financial services consultant (B2B); onboarded 10+ business clients.
+- Charles University, Faculty of Mathematics and Physics (2022 – 2026): Computer Science, AI specialisation.
