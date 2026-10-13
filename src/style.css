@@ -348,6 +348,10 @@ kbd {
   gap: 10px;
   margin: 0;
 }
+.hero-graph-stage {
+  min-height: 420px;
+  position: relative;
+}
 .hero-graph-stage .graph-stage {
   height: 420px;
 }

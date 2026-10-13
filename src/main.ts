@@ -21,7 +21,8 @@ type Route = { kind: 'landing' } | { kind: 'graph' } | { kind: 'note'; note: Not
 const $ = <T extends HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel)!;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
-document.querySelector('#app')!.innerHTML = `
+if (!document.querySelector('.topbar')) {
+  document.querySelector('#app')!.innerHTML = `
   <header class="topbar">
     <a class="brand" href="#/"><span class="brand-mark" aria-hidden="true">[[</span>Vladimir Osenev<span class="brand-mark" aria-hidden="true">]]</span></a>
     <nav class="topnav" aria-label="Main">
@@ -47,6 +48,7 @@ document.querySelector('#app')!.innerHTML = `
     </div>
   </div>
   <div class="hover-popover" hidden></div>`;
+}
 
 const page = $('.page');
 let mounted: GraphHandle[] = [];
@@ -58,7 +60,9 @@ function applySearchShortcutLabels() {
   document.querySelectorAll<HTMLElement>('[data-shortcut="search"]').forEach((el) => {
     el.textContent = label;
   });
-  $('.search-trigger').setAttribute('aria-keyshortcuts', searchShortcutAria());
+  const trigger = $('.search-trigger');
+  trigger.setAttribute('aria-keyshortcuts', searchShortcutAria());
+  trigger.addEventListener('pointerenter', () => void index.ensureSemanticUpgrade(), { once: true });
 }
 applySearchShortcutLabels();
 

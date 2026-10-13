@@ -1,3 +1,4 @@
+import { demoHtml, mountDemos } from './demos';
 import { noteHref } from './markdown';
 import type { VectorIndex } from './search';
 import type { Note, Vault } from './vault';
@@ -48,7 +49,6 @@ export async function renderLanding(
   index: VectorIndex,
   mountGraph: (el: HTMLElement, o?: { hint?: string }) => void | Promise<void>,
 ) {
-  const { demoHtml, mountDemos } = await import('./demos');
   const projects = vault.notes.filter((n) => n.props.type === 'project').sort(byOrder);
   const isFeatured = (p: Note) => String(p.props.featured) === 'true';
   const featured = projects.filter(isFeatured);

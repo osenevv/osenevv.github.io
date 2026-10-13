@@ -179,7 +179,6 @@ export class VectorIndex {
   async init() {
     await this.build(tfidfEmbedder(this.chunks.map((c) => this.chunkInput(c))));
     this.setStatus({ kind: 'lexical' });
-    this.scheduleIdleSemanticUpgrade();
   }
 
   /** TF-IDF is enough for first paint; load MiniLM on search intent or extended idle. */
