@@ -14,9 +14,9 @@ export async function makeIndex(vault: Vault): Promise<VectorIndex> {
   if (process.env.JD_INDEX !== 'semantic') return index;
 
   const { pipeline } = await import('@huggingface/transformers');
-  const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', { dtype: 'q8' });
+  const extractor = await pipeline('feature-extraction', 'Xenova/paraphrase-multilingual-MiniLM-L12-v2', { dtype: 'q8' });
   const embedder = {
-    label: 'MiniLM-L6 · 384d',
+    label: 'Multilingual-MiniLM · 384d',
     threshold: 0.32,
     async embed(texts: string[]) {
       const out = await extractor(texts, { pooling: 'mean', normalize: true });

@@ -512,20 +512,20 @@ const LANG_ALIASES: Record<string, string[]> = {
   'c++': ['c++', 'cpp', 'cplusplus'],
   c: [' c ', 'pure c', 'ansi c', 'clang'],
   'c#': ['c#', 'csharp', 'c sharp', '.net'],
-  java: ['java'],
-  javascript: ['javascript', 'js', 'node.js', 'nodejs', 'typescript'],
-  typescript: ['typescript', 'ts'],
-  python: ['python', 'pytorch'],
+  java: ['java', 'javě', 'javy', 'javu', 'javou'],
+  javascript: ['javascript', 'js', 'node.js', 'nodejs', 'typescript', 'javascriptu', 'javascriptem'],
+  typescript: ['typescript', 'typescriptu', 'typescriptem', 'ts'],
+  python: ['python', 'pythonu', 'pythonem', 'pytorch'],
   haskell: ['haskell'],
   prolog: ['prolog'],
-  rust: ['rust'],
+  rust: ['rust', 'rustu', 'rustem'],
   go: ['golang', ' go ', 'go,', 'go.'],
   golang: ['golang', ' go '],
-  kotlin: ['kotlin'],
-  scala: ['scala'],
+  kotlin: ['kotlin', 'kotlinu', 'kotlinem'],
+  scala: ['scala', 'scaly', 'scale', 'scalu'],
   ruby: ['ruby'],
   php: ['php'],
-  swift: ['swift'],
+  swift: ['swift', 'swiftu', 'swiftem'],
   sql: ['sql', 'sqlite', 'postgres', 'postgresql', 'mysql'],
 };
 
@@ -593,7 +593,14 @@ function evidenceHasModel(evidence: string, model: string): boolean {
 
 /** Job lines about diplomas, maturita, or university — not satisfied by generic "technical" in a job note. */
 export function isEducationCredentialRequirement(req: string): boolean {
-  return /\b(bachelor'?s?\s+degree|master'?s?\s+degree|university\s+degree|college\s+degree|academic\s+degree|tertiary\s+education|field\s+of\s+study|bsc|b\.s\.|msc|m\.s\.|mba|ph\.?d|doctorate|maturita|maturitn[ií]|secondary-school\s+leaving|high\s+school\s+diploma|university\s+education|degree\s+in\s+a\s+technical|technical,\s*mathematical|economics\s+field|no\s+degree\s+required)\b/i.test(
+  if (
+    /\b(medical|pilot|atpl|easa|faa|bar association|real estate|realtor|haccp|dent\w*|veterin\w*|pilates|fitness|driving license|řidičsk\w*|bar exam|juris doctor)\b/i.test(
+      req,
+    )
+  ) {
+    return false;
+  }
+  return /\b((bachelor|master|bsc|msc|ph\.?d|doctorate|computer\s+science|technical|engineering|software|math\w*|statistics|data\s+science)\s+(or\s+\w+\s+)?degree|degree\s+in|bachelor'?s?\s+degree|master'?s?\s+degree|university\s+degree|college\s+degree|academic\s+(degree|background)|tertiary\s+education|field\s+of\s+study|bsc|b\.s\.|msc|m\.s\.|mba|ph\.?d|doctorate|maturita|maturitn[ií]|secondary-school\s+leaving|high\s+school\s+diploma|university\s+education|degree\s+in\s+a\s+technical|technical,\s*mathematical|economics\s+field|no\s+degree\s+required|vysokoškolsk\w*|vysoká škola|vzdělání v oboru|vzdělání v informatice|vzdělání ve statistice|univerzitn[ií]|titul|diplom)\b/i.test(
     req,
   );
 }
@@ -731,7 +738,7 @@ function isSpokenLanguageRequirement(req: string): boolean {
   return (
     /\benglish\b/i.test(req) ||
     /\b(czech|slovak|russian)\b/i.test(req) ||
-    /\b(angli[cč]tin|[cč]e[sš]tin|sloven[sš]tin|ru[sš]tin)/i.test(req) ||
+    /\b(angli[cč]\w*|[cč]es\w*|sloven\w*|ru[sš]\w*)/i.test(req) ||
     /\b(b1|b2|c1)\b/i.test(req) ||
     /\bwritten and spoken\b/i.test(req)
   );
@@ -741,10 +748,10 @@ function evidenceHasSpokenLanguage(req: string, evidence: string): boolean {
   const t = positiveEvidence(evidence).toLowerCase();
   const r = req
     .toLowerCase()
-    .replace(/angli[cč]tin\p{L}*/gu, 'english')
-    .replace(/[cč]e[sš]tin\p{L}*/gu, 'czech')
-    .replace(/sloven[sš]tin\p{L}*/gu, 'slovak')
-    .replace(/ru[sš]tin\p{L}*/gu, 'russian');
+    .replace(/angli[cč]\w*/gu, 'english')
+    .replace(/[cč]es\w*/gu, 'czech')
+    .replace(/sloven\w*/gu, 'slovak')
+    .replace(/ru[sš]\w*/gu, 'russian');
   if (/\benglish\b/.test(r) && /\benglish\b/.test(t)) return true;
   if (/\bczech\b/.test(r) && /\bczech\b/.test(t)) return true;
   if (/\bslovak\b/.test(r) && /\bslovak\b/.test(t)) return true;
@@ -792,6 +799,26 @@ const NOTE_IDS = {
 /** Block known false-positive pairings before we cite a note. */
 function noteDisqualifiedForRequirement(req: string, note: Note, evidence: string): boolean {
   const id = note.id;
+
+  // Alien non-technical domains must never cite portfolio notes
+  if (
+    /\b(dentál\w*|zubn\w*|chrup\w*|dental\b|hygienist\w*|calculus removal|radiographs?|šéfkuchař|kuchař\w*|chef\b|gastronom\w*|haccp|receptur\w*|pilates\w*|reformer|mat pilates|držení těla|páteř\w*|spin\w* alignment|pelvic|stavbyvedoucí|staveništ\w*|betonáž\w*|konstrukc\w*|jeřáb\w*|blueprints|superintendent|concrete pouring|excavation|bozp|osha|pilot\b|dopravní pilot|letadl\w*|atpl\b|flight time|letov\w* hodin\w*|nouzov\w* postupy|air traffic|učitelsk\w*|učitelka|mateřsk\w* škol\w*|předškoln\w*|kindergarten|preschool|toddler\w*|storytimes?|veterin\w*|lékař\w* pro malá zvířata|veterinary|canine|feline|soft-tissue surgery|kadeřn\w*|barber|hair stylist|instalatér|plumber|pipefitter|barista\b|coffee roast\w*|pražič\w* kávy|espresso|latte art|cupping|kavárn\w*)\b/i.test(
+      req,
+    )
+  ) {
+    return true;
+  }
+
+  // Legal practice requirements must never cite any note
+  if (
+    /\b(právn\w*|advokát\w*|soudn\w*|rozhodč\w* řízen\w*|akcionářsk\w*|fúz\w*|obchodn\w* podíl\w*|legal counsel|legal advisory|commercial contracts|corporate governance|attorney|litigation|arbitration|bar exam|juris doctor|shareholder)\b/i.test(
+      req,
+    )
+  ) {
+    return true;
+  }
+
+  if (isEducationCredentialRequirement(req) && id !== NOTE_IDS.charles) return true;
 
   if (isRetrievalRequirement(req) && !evidenceHasRetrievalWork(evidence)) return true;
 
@@ -848,6 +875,12 @@ function noteDisqualifiedForRequirement(req: string, note: Note, evidence: strin
 
   if (isShippedLlmProductionRequirement(req) && !evidenceHasShippedLlmProduction(evidence) && id === NOTE_IDS.zettelLinker) return true;
 
+  if (/\b(terraform|ansible|pulumi|cloudformation)\b/i.test(req)) return true;
+  if (/\b(on[- ]call|pohotovost\w*|24\/7|outages?|výpadk\w* služeb)\b/i.test(req)) return true;
+  if (/\b(helpdesk|servicedesk|ticket resolution|vyřizování požadavků na helpdesku)\b/i.test(req)) return true;
+  if (/\b(cissp|cisa|ceh|professional certification|profesní certifikac\w*|industry certification)\b/i.test(req)) return true;
+  if (/\b(app store|testflight|apple developer|provisioning|certifikát\w* v app store)\b/i.test(req) && id === NOTE_IDS.outlier) return true;
+
   return false;
 }
 
@@ -872,13 +905,13 @@ interface Row {
 const ORDER: Record<Level, number> = { strong: 0, related: 1, growth: 2, out_of_scope: 3 };
 
 const TECH_CORE =
-  /\b(code|coding|software|engineer|engineering|developer|development|programming|python|c#|\.net|java|javascript|typescript|c\+\+|haskell|ocaml|rust|go|golang|kotlin|scala|sql|sqlite|postgres|database|api|apis|rest|graphql|backend|frontend|full-stack|fullstack|web|app|desktop|linux|unix|bash|git|github|ci\/cd|docker|container|kubernetes|aws|cloud|gcp|azure|ai|llm|llms|rag|embedding|embeddings|vector|vectors|whisper|stt|speech|audio|nlp|machine learning|ml|deep learning|eval|evals|evaluation|prompt|prompting|gpt|claude|openai|anthropic|huggingface|langchain|llamaindex|langgraph|pydantic|data structures|algorithms|hnsw|websockets|webrtc|architecture|pytest|unit tests|integration tests|latency|performance|security|privacy|local-first|b2b|stakeholders|rlhf|transformers?|retrieval|semantic search|vector search|fine-tuning|inference|saas|microservices?|computer vision|vision|image|video|yolo|clip|object detection|keyframes?|multimodal|react|redux|next\.js|vue|angular|svelte|css|html|figma|node|express|spring|swift|ios|android|terraform|ansible|wcag|accessibility|server|components?|frameworks?|sdks?|devops|sre|observability|monitoring|powershell|scripting|active directory|entra( id)?|intune|power automate|windows|microsoft 365|m365)\b/i;
+  /\b(code|coding|software|engineer\w*|developer\w*|development|programming|python\w*|c#|\.net|java\w*|javascript\w*|typescript\w*|c\+\+|haskell|ocaml|rust\w*|go|golang|kotlin\w*|scala\w*|sql|sqlite|postgres\w*|database\w*|databáz\w*|relačn\w*|schém\w*|indexac\w*|indexov\w*|transakc\w*|transakč\w*|api|apis|rest|graphql|backend\w*|frontend\w*|full-stack|fullstack|web\w*|app\w*|desktop\w*|linux\w*|unix|bash|shell|git\w*|github|ci\/cd|docker\w*|container\w*|kubernetes|k8s|aws|cloud|gcp|azure|kafka|spark|airflow|snowflake|hibernate|jpa|ai|llm|llms|rag|embedding\w*|vector\w*|vektor\w*|whisper|stt|speech|audio|nlp|machine learning|strojov\w* učen\w*|ml\b|deep learning|hlubok\w* učen\w*|eval|evals|evaluation|evaluac\w*|prompt\w*|gpt\w*|claude|openai|anthropic|huggingface|langchain|llamaindex|langgraph|pydantic|data structures|algorithms?|algoritm\w*|hnsw|websockets?|webrtc|architecture|architektur\w*|pytest\w*|unit tests?|integration tests?|testov\w*|jednotkov\w* test\w*|regresn\w* test\w*|latency|performance|security|bezpečnost\w*|zabezpečen\w*|zranitelnost\w*|penetračn\w*|oprávněn\w*|privacy|local-first|rlhf|transformers?|retrieval|semantic search|vector search|sémantick\w*|fine-tuning|inference|saas|microservices?|mikroservis\w*|mikrosluž\w*|rozhraní|integrac\w*|autentizac\w*|autorizac\w*|computer vision|vision|image\w*|video\w*|yolo|clip|object detection|keyframes?|multimodal|react\w*|redux|next\.js|vue|angular|svelte|css|html|figma|node|express|spring|swift\w*|ios|android|terraform|ansible|wcag|accessibility|server\w*|components?|frameworks?|sdks?|devops|sre|observability|monitoring|powershell|scripting|active directory|entra( id)?|intune|power automate|windows|microsoft 365|m365|vývoj\w*|programov\w*|kódov\w*|inženýr\w*|systémov\w* správ\w*|správce|správa sítě|správa server\w*|nasazen\w*|statisti\w*|klasifikát\w*|hypotéz\w*|shlukov\w*|přeprav\w*|doprav\w*|expedic\w*|zásilek)\b/i;
 
 const TECH_AGENTS =
-  /\b(agentic|ai agents?|llm agents?|software agents?|autonomous agents?|tool[- ]calling agents?|coding agents?|conversational agents?|voice agents?|multi-agent)\b/i;
+  /\b(agentic|ai agents?|llm agents?|software agents?|autonomous agents?|tool[- ]calling agents?|coding agents?|conversational agents?|voice agents?|multi-agent|agentn[íi]\w*)\b/i;
 
 const EXPERIENCE_OBJECTIONS =
-  /\b(\d+\+?\s*(years?|yrs?)|experience|senior|lead|proven track record|tenure|bachelor|degree|master|phd)\b/i;
+  /\b(\d+\+?\s*(years?|yrs?|let|roků|roky)|experience|praxe|senior|lead|proven track record|tenure|bachelor|degree|master|phd|vzdělání|vysokoškolsk[eé])\b/i;
 
 function hasTechAnchor(req: string): boolean {
   return TECH_CORE.test(req) || TECH_AGENTS.test(req);
@@ -908,6 +941,12 @@ function isAiJob(text: string): boolean {
   return /\b(ai|llm|agent|agents|rag|embedding|embeddings|whisper|eval|evals|prompt|gpt|claude|vector|retrieval|nlp|ml)\b/i.test(text);
 }
 
+export function isAlienJobPosting(text: string): boolean {
+  return /\b(barista\b|coffee roast\w*|espresso|latte art|cupping|kavárn\w*|pražič\w* kávy|pilates\w*|reformer|mat pilates|držení těla|páteř\w*|spin\w* alignment|pelvic|dentál\w*|zubn\w*|chrup\w*|dental\b|hygienist\w*|calculus removal|radiographs?|šéfkuchař|kuchař\w*|chef\b|gastronom\w*|haccp|receptur\w*|stavbyvedoucí|staveništ\w*|betonáž\w*|jeřáb\w*|blueprints|superintendent|concrete pouring|excavation|dopravní pilot|pilot\b|letadl\w*|atpl\b|flight time|letov\w* hodin\w*|nouzov\w* postupy|air traffic|učitelsk\w*|učitelka|mateřsk\w* škol\w*|předškoln\w*|kindergarten|preschool|toddler\w*|storytimes?|veterin\w*|lékař\w* pro malá zvířata|veterinary|canine|feline|soft-tissue surgery|kadeřn\w*|barber|hair stylist|instalatér|plumber|pipefitter|corporate lawyer|advokát\w*|soudní spor\w*|litigation|law firm|advokátní kancelář)\b/i.test(
+    text,
+  );
+}
+
 function salesCounterpoint(req: string): string {
   const r = req.toLowerCase();
 
@@ -927,7 +966,7 @@ function salesCounterpoint(req: string): string {
     return 'My daily stack is Python and macOS/Linux tooling. Windows and Microsoft 365 administration would be new ground, but scripting and supporting the tools people use is familiar work.';
   }
 
-  if (/\b(\d+\+?\s*(years?|yrs?)|experience|senior|lead|proven track record|tenure)\b/i.test(r)) {
+  if (/\b(\d+\+?\s*(years?|yrs?|let|roků|roky)|experience|praxe|senior|lead|proven track record|tenure)\b/i.test(r)) {
     return 'Applied LLM work is only a few years old. Recent shipping (embeddings, structured outputs, on-device Whisper, RLHF evals) matters more than years on pre-2022 stacks.';
   }
 
@@ -958,12 +997,18 @@ function salesCounterpoint(req: string): string {
   return 'Same shape as my day job in Python, C#/.NET, and SQLite. I ramp quickly.';
 }
 
-/** Direct Match only for jobs / featured shipped projects. Coursework & class projects cap at Related. */
-function evidenceCeiling(note: Note | undefined): Level {
+/** Direct Match only for jobs / featured shipped projects. Coursework & class projects cap at Related. Degree requirements directly matching CS/Math Bachelor's get Direct Match. */
+function evidenceCeiling(note: Note | undefined, req?: string): Level {
   if (!note) return 'growth';
   const t = String(note.props.type ?? '');
   if (t === 'experience') return note.tags.includes('hackathon') ? 'related' : 'strong';
   if (t === 'project' && String(note.props.featured) === 'true') return 'strong';
+  if (note.id === NOTE_IDS.charles && req && isEducationCredentialRequirement(req)) {
+    const wantsHigher =
+      /\b(master|msc|m\.s\.|ph\.?d|doctorate|magistersk\w*|doktor\w*)\b/i.test(req) &&
+      !/\b(bachelor|bsc|bakalář\w*)\b/i.test(req);
+    return wantsHigher ? 'related' : 'strong';
+  }
   if (t === 'project' || t === 'education' || t === 'about' || t === 'concept') return 'related';
   return 'related';
 }
@@ -1016,9 +1061,9 @@ const GROUPS: { level: Level; title: string }[] = [
 ];
 
 const PEOPLE_LEAD =
-  /\b(lead|leading|manage|managing|coordinat\w*|mentor\w*|supervis\w*)\b[^.]{0,30}\b(team|teams|people|engineers|developers|juniors)\b|\b(team lead|tech lead|people management|line management)\b/i;
+  /\b(lead|leading|manage|managing|coordinat\w*|mentor\w*|supervis\w*|vedení|vedoucí|řízení)\b[^.]{0,30}\b(team|teams|people|engineers|developers|juniors|tým\w*|lidí)\b|\b(team lead|tech lead|people management|line management|vedení týmu|vedoucí týmu)\b/i;
 const LEAD_EVIDENCE = /\b(led|managed|mentored|supervised)\b[^.]{0,30}\b(team|people|engineers|developers)\b|\bteam lead\b/i;
-const YEARS_REQUIRED = /\b\d+\s*\+?\s*(?:(?:-|–|to)\s*\d+\s*)?(years?|yrs?)\b/i;
+const YEARS_REQUIRED = /\b\d+\s*\+?\s*(?:(?:-|–|to)\s*\d+\s*)?(years?|yrs?|let|roků|roky)\b/i;
 
 /** "Python and TypeScript" needs every language; "Python, Scala or Java" needs any one. */
 function languageRequirementMode(req: string): 'and' | 'or' {
@@ -1060,6 +1105,8 @@ const passes = (t: Test, a: string, b = '') => (typeof t === 'function' ? t(a, b
 interface Route {
   /** Requirement shape this route answers. */
   when: Test;
+  /** Semantic concept anchor for cross-lingual vector space matching. */
+  concept?: string;
   /** Canonical evidence notes, best first. */
   notes: string[];
   /** Phrase the cited chunk must contain, so a citation is always checkable. */
@@ -1070,57 +1117,89 @@ const N = NOTE_IDS;
 
 /** Where each kind of requirement is proven in the vault. Order breaks ties between equally strong routes. */
 const ROUTES: Route[] = [
-  { when: isEducationCredentialRequirement, notes: [N.charles], proof: evidenceHasEducationCredential },
-  { when: isSpokenLanguageRequirement, notes: [N.strengths, N.charles], proof: (ev, req) => evidenceHasSpokenLanguage(req, ev) },
+  {
+    when: isEducationCredentialRequirement,
+    concept: 'university degree, bachelor degree, academic diploma, or higher education in technical field',
+    notes: [N.charles],
+    proof: evidenceHasEducationCredential,
+  },
+  {
+    when: isSpokenLanguageRequirement,
+    concept: 'spoken language proficiency in English, Czech, or foreign languages',
+    notes: [N.hegelmann, N.strengths, N.charles],
+    proof: (ev, req) => evidenceHasSpokenLanguage(req, ev),
+  },
   { when: /\b(remote|hybrid|on-?site|relocat\w*|prague|czechia|time ?zones?)\b/i, notes: [N.strengths], proof: /\b(remote|prague|cet)\b/i },
   { when: /\b(finance|financial|insurance|banking|fintech)\b/i, notes: [N.profifp], proof: /\bfinancial\b/i },
 
-  { when: isRetrievalRequirement, notes: [N.zettelLinker, N.yapper, N.paw], proof: evidenceHasRetrievalWork },
-  { when: isLlmQualityRequirement, notes: [N.outlier, N.yapper, N.llmEval], proof: evidenceHasLlmQuality },
   {
-    when: /\b(evals?|evaluation|benchmarks?|red[- ]?team\w*|rlhf|alignment|failure[- ]modes?|quality gates?|model behaviou?r|auditing)\b/i,
+    when: isRetrievalRequirement,
+    concept: 'retrieval-augmented generation, RAG, vector search, embeddings, and semantic search',
+    notes: [N.zettelLinker, N.yapper, N.paw],
+    proof: evidenceHasRetrievalWork,
+  },
+  {
+    when: isLlmQualityRequirement,
+    concept: 'LLM evaluation, quality benchmarks, prompt evaluation, and model alignment',
+    notes: [N.outlier, N.yapper, N.llmEval],
+    proof: evidenceHasLlmQuality,
+  },
+  {
+    when: (r) =>
+      (/\b(evals?|evaluation|benchmarks?|red[- ]?team\w*|rlhf|alignment|failure[- ]modes?|quality gates?|model behaviou?r|auditing)\b/i.test(r) &&
+       /\b(ai|llm|model|prompt|output|dataset|reasoning|cot|chain-of-thought|post-training|generativ|agent|systém\w*|výstup\w*|vyhodnocov\w*|halucinac\w*)\b/i.test(r)) ||
+      /\b(rlhf|red[- ]?team\w*|failure[- ]modes?|eval harnesses?)\b/i.test(r),
+    concept: 'evaluating AI models, red-teaming, benchmarks, RLHF, and failure mode auditing',
     notes: [N.outlier],
     proof: /\b(rlhf|alignment|chain-of-thought|eval harnesses|red-teaming|stress-testing)\b/i,
   },
   {
     when: /\b(post-training|fine-?tun\w*|sft|how llms are (developed|built|trained)|developing ai models|model training)\b/i,
+    concept: 'post-training, fine-tuning, training LLMs, and model development',
     notes: [N.outlier],
     proof: /\b(post-training|fine-tuned|sft|rlhf)\b/i,
   },
   {
     when: /\b(hallucinat\w*|bias|ai risks?|responsible ai|guardrails?|prompt injection|what ai can and can'?t do|(use|using) (it|ai) safely)\b/i,
+    concept: 'mitigating hallucinations, AI safety, prompt injection, and guardrails',
     notes: [N.outlier, N.yapper],
     proof: /\b(hallucinat\w*|failure modes|red-teaming|prompt injection|reward hacking|made up)\b/i,
   },
   {
     when: /\b(personal data|pii|data protection|gdpr|sensitive data)\b/i,
+    concept: 'personal data, sensitive data protection, GDPR, and privacy in training data',
     notes: [N.yapper, N.satFreedom],
     proof: /\b(phone numbers|stripped|stays on|raw audio|watch-only)\b/i,
   },
   {
     when: /\b(structured outputs?|json schemas?|function[- ]calling|pydantic)\b/i,
+    concept: 'structured outputs, JSON schemas, function-calling, and tool use with schemas',
     notes: [N.yapper, N.outlier],
     proof: /\b(structured outputs?|structured llm|json schemas|function-calling)\b/i,
   },
   {
     when: /\b(speech|voice|whisper|audio|transcri\w*|stt|asr|spoken dialogue|dialogue|chatbots?|telegram)\b/i,
+    concept: 'speech recognition, voice transcription, Whisper STT, and audio processing',
     notes: [N.yapper, N.charles],
     proof: /\b(whisper|speech|voice|audio|transcri\w*|dialogue)\b/i,
   },
   {
     when: /\b(computer vision|vision|images?|video|yolo|clip|openclip|object detection|keyframes?|ocr|multimodal)\b/i,
+    concept: 'computer vision, object detection, image and video processing, YOLO, and multimodal models',
     notes: [N.charles],
     proof: /\b(vision|image|video|yolo|clip)\b/i,
   },
   {
     when: /\b(nlp|natural language|computational linguistics|machine translation|language technolog\w*|corpus|corpora)\b/i,
+    concept: 'natural language processing, computational linguistics, and language technologies',
     notes: [N.charles],
     proof: /\b(nlp|natural language|linguistic\w*|language technolog\w*)\b/i,
   },
   {
-    when: /\b(machine learning|ml|neural|deep learning|data science|pytorch|tensorflow|scikit\w*|classifiers?|statistics)\b/i,
-    notes: [N.charles],
-    proof: /\b(machine learning|neural|classifiers?|svm|probability)\b/i,
+    when: /\b(machine learning|strojov\w* učen\w*|ml\b|neural|neuron\w* sít\w*|deep learning|hlubok\w* učen\w*|data science|datov\w* věd\w*|pytorch|tensorflow|scikit\w*|classifiers?|klasifikát\w*|statistics|statisti\w*|hypotéz\w*|hypothesis)\b/i,
+    concept: 'machine learning, neural networks, deep learning, statistical modeling, and data science',
+    notes: [N.charles, N.outlier],
+    proof: /\b(machine learning|neural|classifiers?|svm|probability|statistics|hypotheses)\b/i,
   },
 
   // Prefer a note that covers every required language when the bullet uses "and"/commas; OR-lists still match any.
@@ -1130,89 +1209,175 @@ const ROUTES: Route[] = [
     proof: (ev, req) => evidenceCoversLanguages(req, ev),
   },
 
-  { when: /\b(docker|containers?|ci\/cd|ci|github actions|devops|deployments?)\b/i, notes: [N.mafia, N.yapper, N.zettelLinker], proof: /\b(docker|ci|github actions)\b/i },
-  { when: /\b(linux|unix|bash|shell|command[- ]line|cli)\b/i, notes: [N.charles, N.zettelLinker], proof: /\b(linux|unix|bash|shell|cli)\b/i },
   {
-    when: /\b(tests?|testing|pytest|unit tests?|tdd|software engineering principles|code quality)\b/i,
+    when: /\b(docker\w*|containers?|kontejner\w*|ci\/cd|ci|github actions|devops|deployments?|nasazení)\b/i,
+    concept: 'Docker containers, CI/CD pipelines, GitHub Actions, and deployments',
+    notes: [N.mafia, N.yapper, N.zettelLinker],
+    proof: /\b(docker|ci|github actions)\b/i,
+  },
+  {
+    when: /\b(linux\w*|unix\w*|bash\w*|shell\w*|command[- ]line|cli|příkazov\w* řádk\w*)\b/i,
+    concept: 'Linux environment, bash scripting, and command-line tools',
+    notes: [N.charles, N.zettelLinker],
+    proof: /\b(linux|unix|bash|shell|cli)\b/i,
+  },
+  {
+    when: /\b(tests?|testing|pytest\w*|unit tests?|tdd|software engineering principles|code quality|testov\w*|jednotkov\w* test\w*|regresn\w* test\w*)\b/i,
+    concept: 'software engineering principles, unit testing, automated tests, pytest, and code quality',
     notes: [N.zettelLinker, N.yapper, N.satFreedom],
     proof: /\b(pytest|unit tests|test suite)\b/i,
   },
-  { when: /\b(latency|performance|profiling|benchmark\w*|scalab\w*|low-latency)\b/i, notes: [N.zettelLinker], proof: /\b(ms median|latency|p95)\b/i },
+  {
+    when: (r: string) =>
+      /\b(latency|profiling|benchmark\w*|low-latency|p95|throughput|výkon\w*|profilov\w*|škálovat\w*)\b/i.test(r) ||
+      (/\bperformance\b/i.test(r) && !/\b(transport|deadlines?|job performance)\b/i.test(r)),
+    notes: [N.zettelLinker],
+    proof: /\b(ms median|latency|p95)\b/i,
+  },
+  {
+    when: /\b(database\w*|databáz\w*|sql\b|sqlite\w*|postgres\w*|relational\w*|relačn\w*|schemas?|schém\w*|index\w*|indexac\w*|transactions?|transakc\w*)\b/i,
+    concept: 'relational database schema design, SQL queries, indexes, and transactions',
+    notes: [N.mafia, N.yapper, N.zettelLinker],
+    proof: /\b(sqlite|postgres|database|sql|tables?|schema)\b/i,
+  },
   { when: /\b(websockets?|real-?time|django|asgi|backend|server-side|web (apps?|platforms?)|full-?stack)\b/i, notes: [N.mafia], proof: /\b(websocket\w*|django|real time)\b/i },
-  { when: /\b(api design|rest(ful)?|http|api contracts?|microservices?)\b/i, notes: [N.mafia, N.outlier], proof: /\b(http|api contracts)\b/i },
-  { when: /\b(crm|webhooks?|integrat\w*|apis?)\b/i, notes: [N.hegelmann, N.mafia, N.outlier], proof: /\b(crm|http|api contracts)\b/i },
+  { when: /\b(api design|rest(ful)?|http|api contracts?|microservices?|rozhraní|mikrosluž\w*|mikroservis\w*|kontrakt\w*)\b/i, notes: [N.mafia, N.outlier], proof: /\b(http|api contracts)\b/i },
+  {
+    when: (r: string) =>
+      (/\b(crm\b|webhooks?|integrat\w*|integrac\w*|apis?)\b/i.test(r) &&
+       !/\b(flight|crew|cockpit|aviation|pilot|letadl\w*|posádk\w*)\b/i.test(r)) ||
+      /\b(customer relationship management|hubspot|salesforce)\b/i.test(r),
+    notes: [N.hegelmann, N.mafia, N.outlier],
+    proof: /\b(crm|http|api contracts)\b/i,
+  },
   {
     when: /\b(privacy|on-?device|local-?first|offline|self-hosted)\b/i,
+    concept: 'local-first privacy, on-device data processing, self-hosted applications',
     notes: [N.yapper, N.zettelLinker, N.satFreedom],
     proof: /\b(on-device|stays on|no api keys|local-first|watch-only)\b/i,
   },
-  { when: /\b(desktop|macos|native apps?|cross-platform|gui)\b/i, notes: [N.yapper, N.satFreedom, N.zettelLinker], proof: /\b(macos|desktop|avalonia|gui)\b/i },
+  { when: /\b(desktop\w*|macos|native apps?|cross-platform|multiplatformn\w*|gui)\b/i, notes: [N.yapper, N.satFreedom, N.zettelLinker], proof: /\b(macos|desktop|avalonia|gui)\b/i },
   {
-    when: /\b(data processing|data pipelines?|etl|data cleaning|cleaning|enrich\w*|scraping|web data|data collection|transforming|aggregat\w*)\b/i,
-    notes: [N.hegelmann],
-    proof: /\b(pipelines|enrich|unstructured web data)\b/i,
+    when: /\b(compiler\w*|interpreter\w*|překladač\w*|interpret\w*|ast\b|parsing|grammar\w*|gramatik\w*|lexing|lexer|syntax tree|object-oriented|oop|objektov\w* orientovan\w*)\b/i,
+    concept: 'compilers, interpreters, AST parsing, grammars, and object-oriented programming',
+    notes: [N.arnoldC, N.outlier],
+    proof: /\b(compiler|interpreter|oop|ast|parsing|code generation|scala|stack vm|lexer)\b/i,
+  },
+  {
+    when: /\b(data processing|data pipelines?|etl|data cleaning|cleaning|enrich\w*|scraping|web data|data collection|transforming|aggregat\w*|průzkumov\w* analýz\w*|exploratory data|vizualizac\w*|visualization|zpracování dat|čištění dat|sběr dat)\b/i,
+    concept: 'data processing, exploratory data analysis, data cleaning, and pipelines',
+    notes: [N.hegelmann, N.zettelLinker],
+    proof: /\b(pipelines|enrich|unstructured web data|data|analysis)\b/i,
   },
   { when: /\b(full-?text|keyword search|bm25|fts\d?|search)\b/i, notes: [N.yapper, N.zettelLinker], proof: /\b(fts5|search)\b/i },
   { when: /\b(obsidian|markdown|knowledge (bases?|management|graphs?)|wiki|zettelkasten)\b/i, notes: [N.zettelLinker, N.paw], proof: /\b(obsidian|markdown|vault)\b/i },
   {
     when: /\b(algorithms?|data structures?|computer science|cs fundamentals|fundamentals|system design|complexity)\b/i,
+    concept: 'algorithms, data structures, computer science fundamentals, and system design',
     notes: [N.outlier, N.charles],
     proof: /\b(algorithms|data structures|system design)\b/i,
   },
   {
-    when: /(?<!neural )\b(networks?|networking|it environments?|mqtt|iot|embedded|raspberry|hardware|sensors?)\b/i,
+    when: (r: string) =>
+      (/\b(design,?\s*(build|implement)|build,?\s*(and\s*)?deliver|ship\w* (technical solutions?|(quality\s+)?software)|end-to-end (solutions?|delivery)|quality technical solutions?|production-grade solutions?|technical execution|deliver\w* (software|features?|systems?|solutions?)|reference (solutions?|code)|architecture ownership|clean code deliver\w*)\b|byznysov\S*\s+(požadav|zadán|potřeb|řešen)|referenčn\S*\s+řešen|vzorov\S*\s+řešen/i.test(
+        r,
+      ) &&
+       !/\b(material|concrete|steel|crane|machinery|materiál\w*|staveb\w*)\b/i.test(r)),
+    concept: 'design, build, and deliver quality technical solutions and software architecture',
+    notes: [N.outlier, N.strengths, N.zettelLinker],
+    proof: /\b(reference solutions?|system design|production architectures?|end-to-end|architecture|verified|production-grade)\b/i,
+  },
+  {
+    when: /(?<!neural )\b(networks?|networking|síť\w*|síťov\w*|wi-?fi|it environments?|mqtt|iot|embedded|vestavn\w*|microcontroller\w*|mikrokontrolér\w*|esp32|esp8266|raspberry|hardware|sensors?)\b/i,
+    concept: 'computer networking, IT environments, hardware, and embedded systems',
     notes: [N.iot, N.charles],
     proof: /\b(mqtt|networking|raspberry|sensors)\b/i,
   },
+  {
+    when: (r: string) =>
+      /\b(security|vulnerabilit\w*|zranitelnost\w*|zabezpečen\w*|bezpečnost\w*|iam\b|zero[- ]trust|penetration testing|penetrační|tls|ssl|auditing)\b/i.test(r) ||
+      (/\bcertifikát\w*\b/i.test(r) && !/\b(app store|testflight|apple|ios)\b/i.test(r)),
+    concept: 'cloud security, vulnerability scanning, security audits, and penetration testing',
+    notes: [N.outlier, N.zettelLinker, N.iot],
+    proof: /\b(security|vulnerabilit\w*|audit|testing)\b/i,
+  },
 
   {
-    when: (r) =>
-      /\b(business analy\w*|use cases?|business value|roi|business cases?|process analysis|requirements gathering|procesn[ií]|proces (popsat|změř|analy)|potřebě klienta|návrh funkčního)\b/i.test(
+    when: (r: string) =>
+      (/\b(business analy\w*|use cases?|business value|roi|business cases?|process analysis|requirements gathering|procesn[ií]|proces (popsat|změř|analy)|potřebě klienta|návrh funkčního)\b/i.test(
         r,
-      ) && !/\b(proof of concept|prototyp\w*|technically feasible)\b/i.test(r),
+      ) ||
+        /byznysov\S*\s+(analýz|kalkulac|plán|hodnot)|finančn\S*\s+plán/i.test(r)) &&
+      !/\b(proof of concept|prototyp\w*|technically feasible)\b/i.test(r),
+    concept: 'designing use cases, assessing business value, and business analysis',
     notes: [N.profifp, N.hegelmann],
     proof: /\b(business analyst|use-case|roi|business cases?|needs analysis|stakeholders?|clients?|automat\w*)\b/i,
   },
   {
     when: /\b(adoption|rolling out|roll out|rollout|digital tools|process automation|automatizovat|automatiza[cč]n)\b/i,
+    concept: 'AI adoption, rolling out digital tools, and process automation in organizations',
     notes: [N.hegelmann],
     proof: /\b(agentic workflows|automat\w*|agent pipelines)\b/i,
   },
   {
-    when: /\b(business (brief|needs|requirements)|briefs?|stakeholders?|clients?|customers?|klient\w*|zákazník\w*|byznys|b2b|sales|cross-functional|it and business|propojuješ byznys)\b/i,
-    notes: [N.hegelmann, N.profifp, N.strengths],
-    proof: /\b(stakeholders?|clients?|b2b|sales|automat\w*|agent)\b/i,
+    when: /\b(freight|transport|logistics?|nákladní přeprav\w*|logistik\w*|expedic\w*|zásilek|zásilky|dispečer\w*|dopravc\w*)\b/i,
+    concept: 'commercial freight logistics, transport operations, and shipping deadlines',
+    notes: [N.hegelmann],
+    proof: /\b(freight|logistics|transport|deadlines)\b/i,
+  },
+  {
+    when: (r: string) =>
+      /\b(business (brief|needs|requirements)|briefs?|stakeholders?|clients?|klient\w*|customers?|zákazník\w*|byznys|propojuješ byznys|b2b|sales|selling|prodej\w*|prodávajíc\w*|kupujíc\w*|obchod\w*|cross-functional|it and business|real estate|realtor|broker|nemovitost\w*|realitn\w*|klientské schůzky|home sellers|property viewings)\b/i.test(
+        r,
+      ) &&
+      !/\b(vpn|dhcp|network|email|software|ftp|torrent)\s+clients?\b/i.test(r) &&
+      !/\b(helpdesk|servicedesk|ticket\w*)\b/i.test(r) &&
+      !/\b(pilates|reformer|cvičení|trénink|fitness|mateřsk\w* škol\w*|kindergarten|preschool|toddler|dět\w*|pedagog\w*|dentál\w*|zubn\w*|kadeřn\w*|barber|hair\s+stylist|stavebn\w*|stavbyvedoucí|staveništ\w*|veterin\w*|zvířat\w*)\b/i.test(
+        r,
+      ),
+    concept: 'B2B sales, direct sales, commercial selling, client relationship management, negotiation, and business outreach',
+    notes: [N.profifp, N.strengths, N.hegelmann],
+    proof: /\b(stakeholders?|clients?|b2b|sales|outreach|freight customers?|customers?|automat\w*|agent)\b/i,
   },
   {
     when: (r) =>
-      /\b(communicat\w*|present\w*|explain\w*|non-technical|written communication|articulate|technical documentation|stakeholder|prezentace|sdílet know-how|posouvat ostatní)\b/i.test(
+      /\b(communicat\w*|komunik\w*|present\w*|prezentac\w*|explain\w*|vysvětlov\w*|non-technical|netechnick\w*|written communication|articulate|technical documentation|stakeholder|sdílet know-how|posouvat ostatní)\b/i.test(
         r,
-      ) && !/\b(patient|nursing|clinical|care documentation)\b/i.test(r),
-    notes: [N.profifp, N.strengths],
-    proof: /\b(non-technical|presenting|communicat\w*|documentation|stakeholder)\b/i,
+      ) &&
+      !/\b(patient|nursing|clinical|care documentation|parent\w*|rodič\w*|dět\w*|child\w*|toddler)\b/i.test(
+        r,
+      ),
+    concept: 'communication with non-technical stakeholders, clients, and cross-functional team',
+    notes: [N.hegelmann, N.profifp, N.strengths],
+    proof: /\b(non-technical|presenting|communicat\w*|documentation|stakeholder|sales|clients?|customers?|outreach)\b/i,
   },
   {
-    when: /\b(independen\w*|own work|on (your|their) own|self-direct\w*|ownership|autonom\w*|self-starter|proactive|dotahuješ|hands-on přístup)\b/i,
+    when: /\b(independen\w*|own work|on (your|their) own|self-direct\w*|ownership|autonom\w*|self-starter|proactive|samostatn\w*|vlastní práce|dotahuješ|hands-on přístup)\b/i,
+    concept: 'independent work, self-directed ownership, and planning own work',
     notes: [N.strengths],
     proof: /\b(independent|self-directed|ownership)\b/i,
   },
   {
     when: /\b(learn\w* (fast|quickly)|fast learner|quick learner|curious|curiosity|problem[- ]solv\w*|solving problems|adaptab\w*)\b/i,
+    concept: 'fast learner, quick learning, curiosity, and proactive problem solving',
     notes: [N.strengths],
     proof: /\b(pick up|quickly)\b/i,
   },
   {
-    when: /\b(proof of concept|prototyp\w*|poc|mvp|feasib\w*|hackathons?|end-to-end)\b/i,
+    when: /\b(proof of concept\w*|prototyp\w*|poc|mvp|feasib\w*|hackathons?|end-to-end)\b/i,
+    concept: 'rapid proof of concept, prototypes, MVP, and technical feasibility',
     notes: [N.strengths, N.iot],
     proof: /\b(prototype|end-to-end|hackathon)\b/i,
   },
   {
     when: /\b(team ?work|cross-team|collaborat\w*|international teams?|team player|project partners)\b/i,
-    notes: [N.strengths],
-    proof: /\b(international|teams)\b/i,
+    concept: 'teamwork, collaboration, and international cross-functional teams',
+    notes: [N.hegelmann, N.strengths],
+    proof: /\b(international|teams?|colleagues|stakeholders?)\b/i,
   },
   {
     when: /\b(\d+[^+]{0,20}(let|roky|roků)\b.{0,40}\b(praxe|zkušenost)|praxe.{0,40}\b(byznys|technick)|v ostrém provozu)\b/i,
+    concept: 'years of hands-on experience combining business and technical delivery',
     notes: [N.strengths, N.hegelmann, N.outlier],
     proof: /\b(years of programming|experience|shipped|production|stakeholders?)\b/i,
   },
@@ -1226,12 +1391,14 @@ const ROUTES: Route[] = [
     proof: /\b(embeddings?|whisper|semantic)\b/i,
   },
   {
-    when: /\b(agents?|agentic|tool[- ]?calling|orchestrat\w*|mcp|langgraph|langchain|multi-step|assistants?|automat\w*)\b/i,
+    when: /\b(agents?|agentic|agent\w*|tool[- ]?calling|orchestrat\w*|mcp|langgraph|langchain|multi-step|assistants?|automat\w*)\b/i,
+    concept: 'autonomous ai agents, tool-calling agent workflows, orchestration, and process automation',
     notes: [N.hegelmann, N.zettelLinker, N.paw, N.yapper],
     proof: /\b(agent\w*|langgraph|langchain|automat\w*)\b/i,
   },
   {
     when: /\b(llms?|genai|gen ai|generative ai|gpt\w*|openai|anthropic|claude|chatgpt|copilot|gemini|perplexity|prompts?|prompt engineering|foundation models?|frontier models?|ai models?|ai tools?)\b/i,
+    concept: 'working with LLMs, generative AI, Claude, OpenAI, and prompt engineering',
     notes: [N.hegelmann, N.yapper, N.outlier],
     proof: /\b(llm\w*|claude|cursor|openai|frontier)\b/i,
   },
@@ -1254,14 +1421,37 @@ interface MatchContext {
   index: VectorIndex;
   chunks: Chunk[];
   evidence: Map<Chunk, string>;
+  routeVectors?: Map<Route, Float32Array>;
 }
 
 const isEvidenceNote = (n: Note) => n.props.type !== undefined && !['tool', 'writing'].includes(String(n.props.type));
 
-function matchContext(vault: Vault, index: VectorIndex): MatchContext {
+function dot(a: Float32Array, b: Float32Array): number {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+
+const ROUTE_VECTOR_CACHE = new WeakMap<VectorIndex, Map<Route, Float32Array>>();
+
+async function getRouteVectors(index: VectorIndex): Promise<Map<Route, Float32Array>> {
+  if (index.status.kind !== 'semantic') return new Map();
+  let cached = ROUTE_VECTOR_CACHE.get(index);
+  if (cached) return cached;
+  cached = new Map<Route, Float32Array>();
+  const conceptRoutes = ROUTES.filter((r) => r.concept);
+  const concepts = conceptRoutes.map((r) => r.concept!);
+  const vectors = await index.embed(concepts);
+  conceptRoutes.forEach((r, i) => cached!.set(r, vectors[i]));
+  ROUTE_VECTOR_CACHE.set(index, cached);
+  return cached;
+}
+
+async function matchContext(vault: Vault, index: VectorIndex): Promise<MatchContext> {
   const chunks = index.chunks.filter((c) => isEvidenceNote(vault.byId.get(c.noteId)!));
   const evidence = new Map(chunks.map((c) => [c, evidenceFrom(vault.byId.get(c.noteId)!, c)]));
-  return { vault, index, chunks, evidence };
+  const routeVectors = await getRouteVectors(index);
+  return { vault, index, chunks, evidence, routeVectors };
 }
 
 /** Best similarity of each chunk to the requirement or any of its clauses. */
@@ -1297,14 +1487,26 @@ async function matchRequirement(req: string, ctx: MatchContext, jobIsTechnical: 
   }
 
   let pick: { c: Candidate; level: Level } | undefined;
+  const [qVec] = ctx.routeVectors?.size ? await ctx.index.embed([req]) : [];
+
   for (const route of ROUTES) {
-    if (!passes(route.when, req)) continue;
+    let matches = passes(route.when, req);
+    if (!matches && qVec && route.concept && ctx.routeVectors?.has(route)) {
+      const allowed = jobIsTechnical || isEngineeringRequirement(req, jobIsTechnical) || route.notes.includes(NOTE_IDS.profifp);
+      if (allowed) {
+        const conceptVec = ctx.routeVectors.get(route)!;
+        const sim = dot(qVec, conceptVec);
+        if (sim >= 0.58) matches = true;
+      }
+    }
+    if (!matches) continue;
+
     for (const id of route.notes) {
       const c = pool
         .filter((x) => x.note.id === id && passes(route.proof, x.ev, req))
         .sort((a, b) => b.score - a.score)[0];
       if (!c) continue;
-      const level = evidenceCeiling(c.note);
+      const level = evidenceCeiling(c.note, req);
       if (!pick || ORDER[level] < ORDER[pick.level]) pick = { c, level };
       break;
     }
@@ -1322,9 +1524,18 @@ async function matchRequirement(req: string, ctx: MatchContext, jobIsTechnical: 
 
   if (!pick) return unmatched();
 
-  // Tenure and diplomas can't be proven by a project note alone; soft-skill overlap with a non-tech role is only Related.
+  // Tenure and higher diplomas can't be proven by a bachelor note alone; non-tech soft-skills cap at Related.
+  const wantsHigher =
+    /\b(master|msc|m\.s\.|ph\.?d|doctorate|magistersk\w*|doktor\w*)\b/i.test(req) &&
+    !/\b(bachelor|bsc|bakalář\w*)\b/i.test(req);
+  const isSalesReq =
+    /\b(sales|selling|prodej\w*|client|klient\w*|customer|zákazník\w*|real estate|realtor|broker|nemovitost\w*|realitn\w*|b2b|onboarding|roi|business value|business cases?|byznysov\w* (přínos|hodnot|plán\w*)|financial\w*|finančn\w*|insurance|pojišťov\w*|pojištěn\w*|banking|bankovn\w*|decision-makers?|vedení firem|consult\w*|poraden\w*)\b/i.test(
+      req,
+    );
   const capped =
-    YEARS_REQUIRED.test(req) || isEducationCredentialRequirement(req) || (!jobIsTechnical && !isEngineeringRequirement(req));
+    YEARS_REQUIRED.test(req) ||
+    (isEducationCredentialRequirement(req) && wantsHigher) ||
+    (!jobIsTechnical && !isEngineeringRequirement(req) && !isSalesReq);
   const level = capped ? clampLevel(pick.level, 'related') : pick.level;
   return { req, level, score: pick.c.score, note: pick.c.note, heading: pick.c.chunk.heading };
 }
@@ -1333,11 +1544,34 @@ export async function analyzeJobDescription(text: string, vault: Vault, index: V
   const reqs = requirements(text);
   if (!reqs.length) return { reqs: [], rows: [] as Row[], verdict: verdict([]), matched: 0 };
 
-  const ctx = matchContext(vault, index);
-  const jobIsTechnical = isTechnicalJobPosting(text);
-  const rows = (await Promise.all(reqs.map((req) => matchRequirement(req, ctx, jobIsTechnical)))).sort(
-    (a, b) => ORDER[a.level] - ORDER[b.level],
-  );
+  if (isAlienJobPosting(text)) {
+    const rows = reqs.map((req) => ({ req, level: 'out_of_scope' as Level, score: 0 }));
+    return { reqs, rows, verdict: verdict(rows), matched: 0 };
+  }
+
+  const ctx = await matchContext(vault, index);
+  let jobIsTechnical = isTechnicalJobPosting(text);
+
+  const rawRows = await Promise.all(reqs.map((req) => matchRequirement(req, ctx, jobIsTechnical)));
+  if (
+    !jobIsTechnical &&
+    rawRows.some(
+      (r) =>
+        r.note &&
+        (r.note.props.type === 'experience' || r.note.props.type === 'project') &&
+        r.note.id !== NOTE_IDS.profifp &&
+        r.note.id !== NOTE_IDS.strengths,
+    )
+  ) {
+    jobIsTechnical = true;
+  }
+
+  const rows = jobIsTechnical
+    ? (await Promise.all(reqs.map((req) => matchRequirement(req, ctx, true)))).sort(
+        (a, b) => ORDER[a.level] - ORDER[b.level],
+      )
+    : rawRows.sort((a, b) => ORDER[a.level] - ORDER[b.level]);
+
   const matched = rows.filter((r) => r.level === 'strong' || r.level === 'related').length;
   return { reqs, rows, verdict: verdict(rows), matched };
 }
@@ -1420,6 +1654,7 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
       return;
     }
     results.innerHTML = '<p class="jd-empty">Matching…</p>';
+    await index.ensureSemanticUpgrade();
     const { rows, verdict: v, matched } = await analyzeJobDescription(text, vault, index);
     results.innerHTML = renderResults(rows, v, matched);
   };
@@ -1450,6 +1685,7 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
     await runMatch(raw);
   };
 
+  input.addEventListener('focus', () => void index.ensureSemanticUpgrade(), { once: true });
   el.querySelector('[data-action="match"]')!.addEventListener('click', run);
   input.addEventListener('keydown', (e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && run());
   input.addEventListener('paste', () => setTimeout(run, 0));
