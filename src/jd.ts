@@ -312,15 +312,35 @@ function unprotectAbbreviations(line: string): string {
     .replace(/(\d+)⟦v⟧(\d+)/g, '$1.$2');
 }
 
+/** Split into lines; keep bullets intact so Czech multi-sentence bullets stay one requirement. */
+function splitRequirementSourceLines(text: string): string[] {
+  const out: string[] = [];
+  for (const line of text.split('\n')) {
+    if (/^\s*(?:[-*•]|\d+[.)])\s+\S/.test(line)) {
+      out.push(line);
+      continue;
+    }
+    out.push(...line.split(/(?<=\.)\s+(?=[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ])/));
+  }
+  return out;
+}
+
+function requirementPriority(line: string): number {
+  if (hasTechAnchor(line) || isRetrievalRequirement(line) || isLlmQualityRequirement(line)) return 0;
+  if (REQ_SIGNAL.test(line) || YEARS_REQUIRED.test(line) || isSpokenLanguageRequirement(line)) return 1;
+  if (line.length >= 40) return 2;
+  return 3;
+}
+
 /** Split job text into requirement lines without breaking e.g., versions, or C#. */
 export function parseJobRequirements(text: string): string[] {
   const protectedText = protectAbbreviations(
     trimPreambleBeforeRequirements(stripNonRequirementSections(stripWebPageJunk(normalizeJobPaste(text)))),
   );
   const seen = new Set<string>();
-  const out: string[] = [];
+  const candidates: string[] = [];
   let first = true;
-  for (const raw of protectedText.split(/\n|(?<=\.)\s+(?=[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ])/)) {
+  for (const raw of splitRequirementSourceLines(protectedText)) {
     const l = unprotectAbbreviations(raw.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim());
     const key = l.toLowerCase();
     if (!l) continue;
@@ -328,15 +348,46 @@ export function parseJobRequirements(text: string): string[] {
     first = false;
     if (isFirst && isPostingTitle(raw, l)) continue;
     if (l.length < 8 || seen.has(key)) continue;
-    if (sectionHeaderKind(l) !== 'none') continue;
+    // Drop bare section titles ("Požadavky", "Výhodou") but keep "Nice to have: AWS, Airflow".
+    const headerKind = sectionHeaderKind(l);
+    if (headerKind !== 'none') {
+      const withoutTitle = l
+        .replace(/^(#{1,3}\s*)?/i, '')
+        .replace(
+          /^(requirements?|qualifications?|požadavky|kvalifikace|nice to have|výhodou|co očekáváme|co už máš za sebou|nástroje a dovednosti|jazyky a pobyt|co tě čeká|co vlastníš|what we offer|nabízíme)\s*:?\s*/i,
+          '',
+        )
+        .trim();
+      if (!withoutTitle || withoutTitle.length < 8) continue;
+      // Fall through using the content after the inline title.
+      const contentKey = withoutTitle.toLowerCase();
+      if (seen.has(contentKey)) continue;
+      seen.add(contentKey);
+      candidates.push(withoutTitle);
+      continue;
+    }
     if (NOT_A_REQUIREMENT.test(l)) continue;
     if (isJobTitle(l) || isJobHeaderLine(l) || isNonRequirementLine(l)) continue;
     if (isCompanyBlurb(l) || isBenefitsLine(l) || isApplyOrProcessLine(l) || isMetaLine(l)) continue;
+    // Tiny soft-skill crumbs after period-splitting ("Procesní myšlení.") are noise.
+    // Keep short tech lines ("Proficiency in C#") via language / tech anchors.
+    if (
+      l.length < 24 &&
+      l.split(/\s+/).length <= 3 &&
+      !hasTechAnchor(l) &&
+      !namedLanguages(l).length &&
+      !REQ_SIGNAL.test(l) &&
+      !YEARS_REQUIRED.test(l)
+    )
+      continue;
     seen.add(key);
-    out.push(l);
-    if (out.length >= 25) break;
+    candidates.push(l);
   }
-  return out;
+  if (candidates.length <= 25) return candidates;
+  // Prefer tech / signal lines so soft Czech fluff cannot crowd out RAG/Python bullets.
+  const preferred = candidates.filter((c) => requirementPriority(c) <= 1);
+  const rest = candidates.filter((c) => requirementPriority(c) > 1);
+  return [...preferred, ...rest].slice(0, 25);
 }
 
 const ROLE_WORD =
@@ -1031,30 +1082,32 @@ const ROUTES: Route[] = [
 
   {
     when: (r) =>
-      /\b(business analy\w*|use cases?|business value|roi|business cases?|process analysis|requirements gathering)\b/i.test(r) &&
-      !/\b(proof of concept|prototyp\w*|technically feasible)\b/i.test(r),
+      /\b(business analy\w*|use cases?|business value|roi|business cases?|process analysis|requirements gathering|procesn[ií]|proces (popsat|změř|analy)|potřebě klienta|návrh funkčního)\b/i.test(
+        r,
+      ) && !/\b(proof of concept|prototyp\w*|technically feasible)\b/i.test(r),
     notes: [N.profifp, N.hegelmann],
-    proof: /\b(business analyst|use-case|roi|business cases?|needs analysis)\b/i,
+    proof: /\b(business analyst|use-case|roi|business cases?|needs analysis|stakeholders?|clients?|automat\w*)\b/i,
   },
   {
-    when: /\b(adoption|rolling out|roll out|rollout|digital tools|process automation)\b/i,
+    when: /\b(adoption|rolling out|roll out|rollout|digital tools|process automation|automatizovat|automatiza[cč]n)\b/i,
     notes: [N.hegelmann],
     proof: /\b(agentic workflows|automat\w*|agent pipelines)\b/i,
   },
   {
-    when: /\b(business (brief|needs|requirements)|briefs?|stakeholders?|clients?|customers?|b2b|sales|cross-functional|it and business)\b/i,
+    when: /\b(business (brief|needs|requirements)|briefs?|stakeholders?|clients?|customers?|klient\w*|zákazník\w*|byznys|b2b|sales|cross-functional|it and business|propojuješ byznys)\b/i,
     notes: [N.hegelmann, N.profifp, N.strengths],
-    proof: /\b(stakeholders?|clients?|b2b|sales)\b/i,
+    proof: /\b(stakeholders?|clients?|b2b|sales|automat\w*|agent)\b/i,
   },
   {
     when: (r) =>
-      /\b(communicat\w*|present\w*|explain\w*|non-technical|written communication|articulate|technical documentation|stakeholder)\b/i.test(r) &&
-      !/\b(patient|nursing|clinical|care documentation)\b/i.test(r),
+      /\b(communicat\w*|present\w*|explain\w*|non-technical|written communication|articulate|technical documentation|stakeholder|prezentace|sdílet know-how|posouvat ostatní)\b/i.test(
+        r,
+      ) && !/\b(patient|nursing|clinical|care documentation)\b/i.test(r),
     notes: [N.profifp, N.strengths],
     proof: /\b(non-technical|presenting|communicat\w*|documentation|stakeholder)\b/i,
   },
   {
-    when: /\b(independen\w*|own work|on (your|their) own|self-direct\w*|ownership|autonom\w*|self-starter|proactive)\b/i,
+    when: /\b(independen\w*|own work|on (your|their) own|self-direct\w*|ownership|autonom\w*|self-starter|proactive|dotahuješ|hands-on přístup)\b/i,
     notes: [N.strengths],
     proof: /\b(independent|self-directed|ownership)\b/i,
   },
@@ -1072,6 +1125,11 @@ const ROUTES: Route[] = [
     when: /\b(team ?work|cross-team|collaborat\w*|international teams?|team player|project partners)\b/i,
     notes: [N.strengths],
     proof: /\b(international|teams)\b/i,
+  },
+  {
+    when: /\b(\d+[^+]{0,20}(let|roky|roků)\b.{0,40}\b(praxe|zkušenost)|praxe.{0,40}\b(byznys|technick)|v ostrém provozu)\b/i,
+    notes: [N.strengths, N.hegelmann, N.outlier],
+    proof: /\b(years of programming|experience|shipped|production|stakeholders?)\b/i,
   },
   { when: /\b(years? of programming|programming experience|coding experience)\b/i, notes: [N.strengths], proof: /\byears of programming\b/i },
   { when: /\b(open[- ]source|github)\b/i, notes: [N.zettelLinker, N.yapper, N.mafia], proof: /\bgithub\b/i },

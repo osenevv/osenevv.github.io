@@ -239,4 +239,18 @@ if (!sjOk) {
   failed = true;
 }
 
+const softCzech = parseJobRequirements(`Co očekáváme
+Propojuješ byznys a technologie. Rozumíš potřebě klienta a umíš z ní udělat návrh funkčního řešení.
+Než začneš automatizovat, umíš proces popsat a změřit.
+Postavíš prototyp, otestuješ varianty a posuneš to dál.`);
+const softOk =
+  softCzech.some((l) => /byznys a technologie/i.test(l)) &&
+  softCzech.some((l) => /automatizovat/i.test(l)) &&
+  !softCzech.some((l) => /^Co očekáváme$/i.test(l));
+console.log(`${softOk ? 'OK' : 'FAIL'}: Czech soft-skill paste keeps client/automation lines`);
+if (!softOk) {
+  console.log('  got:', softCzech);
+  failed = true;
+}
+
 process.exit(failed ? 1 : 0);
