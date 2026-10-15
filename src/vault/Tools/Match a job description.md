@@ -4,7 +4,7 @@ tags: [tool, retrieval]
 ---
 # Match a job description
 
-Paste a job post (bullets or a whole careers-page copy). The matcher splits it into requirements, drops benefits and company fluff, then checks each line against this vault.
+Paste a job post (bullets or a whole careers-page copy — not just the URL; this runs in your browser and cannot fetch job boards). The matcher splits it into requirements, drops benefits and company fluff, then checks each line against this vault.
 
 ```jd-match
 ```

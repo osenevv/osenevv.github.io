@@ -23,17 +23,17 @@ const REQ_SIGNAL =
   /\b(must|required|require|need to|should have|we (need|want|require)|looking for|you (will|can|should)|experience|years?|yrs?|degree|bachelor|master|phd|proficient|fluent|hands-on|ability to|knowledge of|skills? in|understanding of|familiarity with|znalost|zkušenost|minimálně|alespoň|požadujeme|očekáváme|výhodou|nice to have|plus if)\b/i;
 
 const SKIP_SECTION_HEADER =
-  /^(#{1,3}\s*)?(what we offer|what you'll get|what you get|employee benefits?|our benefits?|perks?( and benefits)?|why join|why work (with|at)|about (us|the company|our company)|who we are|our mission|our values?|company (profile|overview)|life at |our culture|diversity|equal opportunity|recruitment process|hiring process|nabízíme|benefity|o nás|o společnosti|co (u nás )?nabízíme|proč (u nás|join)|plat a benefity|platové podmínky|mzda|odměna|compensation|salary|lokace|místo výkonu)\b/i;
+  /^(#{1,3}\s*)?(what we offer|what you'll get|what you get|employee benefits?|our benefits?|perks?( and benefits)?|why join|why work (with|at)|about (us|the company|our company)|who we are|our mission|our values?|company (profile|overview)|life at |our culture|diversity|equal opportunity|recruitment process|hiring process|nabízíme|benefity|o nás|o společnosti|co (u nás )?nabízíme|proč (u nás|join|tuhle roli)|plat a benefity|platové podmínky|mzda|odměna|compensation|salary|lokace|místo výkonu|bude tě to bavit|jsme \w+)/i;
 
 const APPLY_SECTION_HEADER =
-  /^(#{1,3}\s*)?(how to apply|apply (now|here|today)?|submit (your )?application|contact (us|hr)?|join (us|our team)|ucházení|jak se (přihlásit|ucházet)|přihláška|výběrové řízení)\s*:?\s*$/i;
+  /^(#{1,3}\s*)?(how to apply|apply (now|here|today)?|submit (your )?application|contact (us|hr)?|join (us|our team)|ucházení|jak se (přihlásit|ucházet)|přihláška|výběrové řízení|chceš vědět víc|rovnou poslat cv)\s*:?\s*$/i;
 
 /** Standalone section titles (not inline "Nice to have: AWS, …"). */
 const MAIN_REQUIREMENT_SECTION_TITLE =
-  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice)\s*:?\s*$/i;
+  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice|co očekáváme|co už máš za sebou|nástroje a dovednosti|jazyky a pobyt)\s*:?\s*$/i;
 
 const KEEP_SECTION_TITLE =
-  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice|main duties|your responsibilities)\s*:?\s*$/i;
+  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice|main duties|your responsibilities|co tě čeká|co vlastníš|co očekáváme|co už máš za sebou|nástroje a dovednosti|jazyky a pobyt|výhodou)\s*:?\s*$/i;
 
 type SectionMode = 'body' | 'skip' | 'footer';
 
@@ -47,10 +47,22 @@ function sectionHeaderKind(line: string): 'skip' | 'keep' | 'apply' | 'none' {
   return 'none';
 }
 
+/** True when the user pasted only a job-board link (matcher is client-side; no fetch). */
+export function isBareJobUrl(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  return /^https?:\/\/\S+$/i.test(t) || /^www\.\S+$/i.test(t);
+}
+
 /** Normalize pasted HTML, bullets, and line endings from jobs boards. */
 export function normalizeJobPaste(text: string): string {
   const expanded = text
     .replace(/\r\n?/g, '\n')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/\u00a0/g, ' ')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(ul|ol|li|div|p|tr)>\s*/gi, '\n')
@@ -316,6 +328,7 @@ export function parseJobRequirements(text: string): string[] {
     first = false;
     if (isFirst && isPostingTitle(raw, l)) continue;
     if (l.length < 8 || seen.has(key)) continue;
+    if (sectionHeaderKind(l) !== 'none') continue;
     if (NOT_A_REQUIREMENT.test(l)) continue;
     if (isJobTitle(l) || isJobHeaderLine(l) || isNonRequirementLine(l)) continue;
     if (isCompanyBlurb(l) || isBenefitsLine(l) || isApplyOrProcessLine(l) || isMetaLine(l)) continue;
@@ -1257,6 +1270,11 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
   const results = el.querySelector<HTMLElement>('.jd-results')!;
 
   const run = async () => {
+    if (isBareJobUrl(input.value)) {
+      results.innerHTML =
+        '<p class="jd-empty">Paste the job text, not just the link. This matcher runs in your browser and cannot open job-board URLs (CORS / privacy).</p>';
+      return;
+    }
     const reqs = requirements(input.value);
     if (!reqs.length) {
       results.innerHTML = '<p class="jd-empty">Paste something first.</p>';

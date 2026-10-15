@@ -1,4 +1,4 @@
-import { isEngineeringRequirement, normalizeJobPaste, parseJobRequirements } from '../src/jd.ts';
+import { isBareJobUrl, isEngineeringRequirement, normalizeJobPaste, parseJobRequirements } from '../src/jd.ts';
 
 const engineeringCases: [string, boolean, boolean][] = [
   ['singing and breakdancing', false, false],
@@ -178,6 +178,64 @@ const pageOk =
 console.log(`${pageOk ? 'OK' : 'FAIL'}: whole-page Ctrl+A paste (jobs.cz junk)`);
 if (!pageOk) {
   console.log('  got:', fullPage);
+  failed = true;
+}
+
+const urlOnly = isBareJobUrl('https://www.startupjobs.cz/nabidka/108529/ai-strategy-consultant-praha-brno-manila');
+const urlReqs = parseJobRequirements('https://www.startupjobs.cz/nabidka/108529/ai-strategy-consultant-praha-brno-manila');
+const urlOk = urlOnly && urlReqs.length === 0 && !isBareJobUrl('Python and RAG experience');
+console.log(`${urlOk ? 'OK' : 'FAIL'}: bare job URL is detected and yields no requirements`);
+if (!urlOk) {
+  console.log('  urlOnly:', urlOnly, 'reqs:', urlReqs);
+  failed = true;
+}
+
+const startupJobs = parseJobRequirements(`
+AI Strategy Consultant (Praha, Brno, Manila)
+Addvery
+
+Proč tuhle roli v Addvery obsazujeme
+Klienti nás žádají o AI doporučení. Zakládáme samostatnou roli.
+
+Co tě čeká
+- Hledání příležitostí: Zmapovat proces klienta.
+
+Co očekáváme
+- Propojuješ byznys a technologie.
+- Silný hands-on přístup. Postavíš prototyp, otestuješ varianty a posuneš to dál.
+
+Co už máš za sebou
+- 2 a více let praxe, která kombinuje byznys a technické doručení.
+
+Nástroje a dovednosti
+- Python a SQL na úrovni, kdy postavíš pipeline a napojíš API.
+- Orientace v LLM, RAG, embeddings, evaluaci a orchestraci agentů výhodou.
+
+Jazyky a pobyt
+- Čeština nebo slovenština na úrovni rodilého mluvčího, angličtina na pracovní úrovni.
+
+Výhodou
+- Poradenské zázemí, včetně technologického poradenství v Big 4.
+
+Co nabízíme
+- Samostatnou roli, kterou u nás zakládáš.
+- Flexibilitu a férový přístup.
+
+Bude tě to bavit když
+- AI tě zajímá věcně
+
+Jsme Addvery, tým konzultantů.
+Chceš vědět víc nebo rovnou poslat CV?
+`);
+
+const sjOk =
+  startupJobs.some((l) => /Python a SQL/i.test(l)) &&
+  startupJobs.some((l) => /LLM, RAG, embeddings/i.test(l)) &&
+  !startupJobs.some((l) => /^(Co očekáváme|Nástroje a dovednosti|Jazyky a pobyt|Výhodou)$/i.test(l)) &&
+  !startupJobs.some((l) => /\b(Samostatnou roli|Flexibilitu a férový|Bude tě to bavit|Jsme Addvery|Chceš vědět víc)\b/i.test(l));
+console.log(`${sjOk ? 'OK' : 'FAIL'}: StartupJobs.cz Czech section headers`);
+if (!sjOk) {
+  console.log('  got:', startupJobs);
   failed = true;
 }
 
