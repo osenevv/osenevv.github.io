@@ -260,43 +260,40 @@ if (!softOk) {
   failed = true;
 }
 
-const reader = cleanReaderMarkdown(`Title: AI Strategy Consultant
+const reader = cleanReaderMarkdown(`Title: Senior AI Engineer
 
-URL Source: https://www.startupjobs.cz/nabidka/108529/x
+URL Source: https://boards.greenhouse.io/example/jobs/123
 
 Markdown Content:
-Cookie banner junk here
+Accept cookies to continue
 
-## **Proč tuhle roli v Addvery obsazujeme**
+## **About the role**
 
-Intro fluff.
+Build retrieval features for our product.
 
-## **Co očekáváme**
+## **Requirements**
 
-*   **Propojuješ byznys a technologie.** Rozumíš potřebě klienta.
+*   Experience with RAG pipelines and embeddings
+*   Strong Python and SQL
+*   LLM evaluation and agent orchestration
 
-**Nástroje a dovednosti**
+## **Benefits**
 
-*   Python a SQL na úrovni, kdy postavíš pipeline a napojíš API.
-*   Orientace v LLM, RAG, embeddings, evaluaci a orchestraci agentů výhodou.
+*   Unlimited PTO
 
-## **Co nabízíme**
+## **About the role**
 
-*   Flexibilitu
-
-## **Proč tuhle roli v Addvery obsazujeme**
-
-Duplicate copy should be cut.
+Duplicate reprint of the posting should be cut.
 `);
 const readerReqs = parseJobRequirements(reader);
 const readerOk =
-  /Proč tuhle roli/.test(reader) &&
-  !/Cookie banner/.test(reader) &&
-  !/Duplicate copy/.test(reader) &&
-  readerReqs.some((l) => /Python a SQL/i.test(l)) &&
-  readerReqs.some((l) => /LLM, RAG/i.test(l)) &&
-  normalizeJobUrl('www.startupjobs.cz/x') === 'https://www.startupjobs.cz/x';
-console.log(`${readerOk ? 'OK' : 'FAIL'}: Jina reader markdown cleans into matchable JD text`);
+  /About the role/.test(reader) &&
+  !/Accept cookies/.test(reader) &&
+  !/Duplicate reprint/.test(reader) &&
+  readerReqs.some((l) => /RAG pipelines/i.test(l)) &&
+  readerReqs.some((l) => /Python and SQL/i.test(l)) &&
+  normalizeJobUrl('www.example.com/jobs/1') === 'https://www.example.com/jobs/1';
+console.log(`${readerOk ? 'OK' : 'FAIL'}: generic job-board reader markdown cleans into matchable JD text`);
 if (!readerOk) {
   console.log('  reader head:', reader.slice(0, 200));
   console.log('  reqs:', readerReqs);

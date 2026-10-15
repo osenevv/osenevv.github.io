@@ -92,21 +92,26 @@ export async function fetchJobUrlText(url: string, init?: { signal?: AbortSignal
   throw lastErr instanceof Error ? lastErr : new Error('Could not fetch job URL');
 }
 
-/** Strip Jina reader headers / markdown chrome into paste-like plain text. */
+/** Section headings that usually mark the start of a real job body (any board). */
+const READER_JOB_BODY_START =
+  /(?:^|\n)#{0,3}\s*\**\s*(about (the )?(job|role)|job description|the role|what you('ll| will) do|responsibilities|key responsibilities|requirements?|qualifications?|must[- ]haves?|your (profile|skills)|who you are|what we('re| are) looking for|ideal candidate|požadavky|kvalifikace|náplň práce|pracovní náplň|co (tě čeká|očekáváme|budete|hledáme|vlastníš)|o pozici|popis pozice|proč (tuhle|tuto) roli|nástroje a dovednosti)\b/i;
+
+/** Strip reader headers / markdown chrome into paste-like plain text (any job board). */
 export function cleanReaderMarkdown(text: string): string {
   let t = text.replace(/\r\n?/g, '\n');
   t = t.replace(/^Title:\s*.*$/m, '');
   t = t.replace(/^URL Source:\s*.*$/m, '');
   t = t.replace(/^Markdown Content:\s*/m, '');
   t = t.replace(/^Warning:\s*.*$/gm, '');
-  // Prefer the job body once a familiar section heading appears.
-  const start = t.search(
-    /(?:^|\n)#{0,3}\s*\**\s*(Proč tuhle roli|Co tě čeká|Co očekáváme|Požadavky|Requirements?|About the (?:job|role)|Náplň práce)\b/i,
-  );
+  t = t.replace(/^Published Time:\s*.*$/gm, '');
+
+  // Drop cookie / consent chrome before the job body when we can find a section heading.
+  const start = t.search(READER_JOB_BODY_START);
   if (start > 0) t = t.slice(start);
-  // Drop a duplicated second copy of the same Czech JD (StartupJobs often repeats).
-  const copies = [...t.matchAll(/(?:^|\n)#{0,3}\s*\**\s*Proč tuhle roli/gi)];
-  if (copies.length >= 2 && copies[1].index != null) t = t.slice(0, copies[1].index);
+
+  // Many boards reprint the same page twice in reader output — cut at a repeated heading.
+  t = cutRepeatedReaderHeadings(t);
+
   return t
     .replace(/^#{1,6}\s*/gm, '')
     .replace(/\*\*/g, '')
@@ -115,6 +120,26 @@ export function cleanReaderMarkdown(text: string): string {
     .replace(/^\*\s+/gm, '- ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
+}
+
+/** If the same heading line appears again later, keep only the first copy. */
+function cutRepeatedReaderHeadings(text: string): string {
+  const headingRe = /(?:^|\n)(#{1,3}[^\n]{8,120})(?=\n|$)/g;
+  const seen = new Map<string, number>();
+  for (const m of text.matchAll(headingRe)) {
+    if (m.index == null) continue;
+    const norm = m[1]
+      .replace(/[#*]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    if (norm.length < 10) continue;
+    const prev = seen.get(norm);
+    // Reprint blocks can be short in fixtures; still cut when the same heading returns.
+    if (prev != null && m.index - prev > 120) return text.slice(0, m.index);
+    seen.set(norm, m.index);
+  }
+  return text;
 }
 
 /** Normalize pasted HTML, bullets, and line endings from jobs boards. */
@@ -414,18 +439,12 @@ export function parseJobRequirements(text: string): string[] {
     first = false;
     if (isFirst && isPostingTitle(raw, l)) continue;
     if (l.length < 8 || seen.has(key)) continue;
-    // Drop bare section titles ("Požadavky", "Výhodou") but keep "Nice to have: AWS, Airflow".
+    // Drop bare section titles ("Requirements", "Požadavky") but keep "Nice to have: AWS, Airflow".
     const headerKind = sectionHeaderKind(l);
     if (headerKind !== 'none') {
-      const withoutTitle = l
-        .replace(/^(#{1,3}\s*)?/i, '')
-        .replace(
-          /^(requirements?|qualifications?|požadavky|kvalifikace|nice to have|výhodou|co očekáváme|co už máš za sebou|nástroje a dovednosti|jazyky a pobyt|co tě čeká|co vlastníš|what we offer|nabízíme)\s*:?\s*/i,
-          '',
-        )
-        .trim();
-      if (!withoutTitle || withoutTitle.length < 8) continue;
-      // Fall through using the content after the inline title.
+      const inline = l.match(/^[^:\n]{0,80}:\s+(.+)$/);
+      const withoutTitle = inline?.[1]?.trim() ?? '';
+      if (withoutTitle.length < 8) continue;
       const contentKey = withoutTitle.toLowerCase();
       if (seen.has(contentKey)) continue;
       seen.add(contentKey);
