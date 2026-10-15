@@ -1,4 +1,11 @@
-import { isBareJobUrl, isEngineeringRequirement, normalizeJobPaste, parseJobRequirements } from '../src/jd.ts';
+import {
+  cleanReaderMarkdown,
+  isBareJobUrl,
+  isEngineeringRequirement,
+  normalizeJobPaste,
+  normalizeJobUrl,
+  parseJobRequirements,
+} from '../src/jd.ts';
 
 const engineeringCases: [string, boolean, boolean][] = [
   ['singing and breakdancing', false, false],
@@ -250,6 +257,49 @@ const softOk =
 console.log(`${softOk ? 'OK' : 'FAIL'}: Czech soft-skill paste keeps client/automation lines`);
 if (!softOk) {
   console.log('  got:', softCzech);
+  failed = true;
+}
+
+const reader = cleanReaderMarkdown(`Title: AI Strategy Consultant
+
+URL Source: https://www.startupjobs.cz/nabidka/108529/x
+
+Markdown Content:
+Cookie banner junk here
+
+## **Proč tuhle roli v Addvery obsazujeme**
+
+Intro fluff.
+
+## **Co očekáváme**
+
+*   **Propojuješ byznys a technologie.** Rozumíš potřebě klienta.
+
+**Nástroje a dovednosti**
+
+*   Python a SQL na úrovni, kdy postavíš pipeline a napojíš API.
+*   Orientace v LLM, RAG, embeddings, evaluaci a orchestraci agentů výhodou.
+
+## **Co nabízíme**
+
+*   Flexibilitu
+
+## **Proč tuhle roli v Addvery obsazujeme**
+
+Duplicate copy should be cut.
+`);
+const readerReqs = parseJobRequirements(reader);
+const readerOk =
+  /Proč tuhle roli/.test(reader) &&
+  !/Cookie banner/.test(reader) &&
+  !/Duplicate copy/.test(reader) &&
+  readerReqs.some((l) => /Python a SQL/i.test(l)) &&
+  readerReqs.some((l) => /LLM, RAG/i.test(l)) &&
+  normalizeJobUrl('www.startupjobs.cz/x') === 'https://www.startupjobs.cz/x';
+console.log(`${readerOk ? 'OK' : 'FAIL'}: Jina reader markdown cleans into matchable JD text`);
+if (!readerOk) {
+  console.log('  reader head:', reader.slice(0, 200));
+  console.log('  reqs:', readerReqs);
   failed = true;
 }
 

@@ -47,11 +47,74 @@ function sectionHeaderKind(line: string): 'skip' | 'keep' | 'apply' | 'none' {
   return 'none';
 }
 
-/** True when the user pasted only a job-board link (matcher is client-side; no fetch). */
+/** True when the user pasted only a job-board link. */
 export function isBareJobUrl(text: string): boolean {
   const t = text.trim();
   if (!t) return false;
   return /^https?:\/\/\S+$/i.test(t) || /^www\.\S+$/i.test(t);
+}
+
+/** Turn a pasted www/http job link into an absolute https URL. */
+export function normalizeJobUrl(text: string): string {
+  const t = text.trim();
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^www\./i.test(t)) return `https://${t}`;
+  return t;
+}
+
+/**
+ * Fetch a public job-board page as plain text.
+ * Browsers cannot read most careers sites directly (CORS), so we use the
+ * Jina reader (`r.jina.ai`) which returns markdown and allows cross-origin GETs.
+ * Matching still runs locally on the returned text.
+ */
+export async function fetchJobUrlText(url: string, init?: { signal?: AbortSignal }): Promise<string> {
+  const absolute = normalizeJobUrl(url);
+  if (!/^https?:\/\//i.test(absolute)) throw new Error('Not a URL');
+
+  const reader = `https://r.jina.ai/${absolute}`;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(reader, {
+        headers: { Accept: 'text/plain' },
+        signal: init?.signal ?? AbortSignal.timeout(28000),
+      });
+      if (!res.ok) throw new Error(`Reader returned ${res.status}`);
+      const raw = await res.text();
+      const cleaned = cleanReaderMarkdown(raw);
+      if (cleaned.replace(/\s+/g, ' ').trim().length < 80) throw new Error('Fetched page had too little text');
+      return cleaned;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Could not fetch job URL');
+}
+
+/** Strip Jina reader headers / markdown chrome into paste-like plain text. */
+export function cleanReaderMarkdown(text: string): string {
+  let t = text.replace(/\r\n?/g, '\n');
+  t = t.replace(/^Title:\s*.*$/m, '');
+  t = t.replace(/^URL Source:\s*.*$/m, '');
+  t = t.replace(/^Markdown Content:\s*/m, '');
+  t = t.replace(/^Warning:\s*.*$/gm, '');
+  // Prefer the job body once a familiar section heading appears.
+  const start = t.search(
+    /(?:^|\n)#{0,3}\s*\**\s*(Proč tuhle roli|Co tě čeká|Co očekáváme|Požadavky|Requirements?|About the (?:job|role)|Náplň práce)\b/i,
+  );
+  if (start > 0) t = t.slice(start);
+  // Drop a duplicated second copy of the same Czech JD (StartupJobs often repeats).
+  const copies = [...t.matchAll(/(?:^|\n)#{0,3}\s*\**\s*Proč tuhle roli/gi)];
+  if (copies.length >= 2 && copies[1].index != null) t = t.slice(0, copies[1].index);
+  return t
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/\*\*/g, '')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/^\*\s+/gm, '- ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /** Normalize pasted HTML, bullets, and line endings from jobs boards. */
@@ -64,11 +127,14 @@ export function normalizeJobPaste(text: string): string {
     .replace(/&gt;/gi, '>')
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/\u00a0/g, ' ')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/\*\*/g, '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(ul|ol|li|div|p|tr)>\s*/gi, '\n')
     .replace(/<p[^>]*>\s*/gi, '\n')
     .replace(/<li[^>]*>\s*/gi, '\n- ')
     .replace(/<[^>]+>/g, '')
+    .replace(/^\*\s+/gm, '- ')
     .replace(/[\u2022\u2023\u25E6\u25AA\u25CF\u2219\u00B7]\s*/g, '\n- ')
     .replace(/\n{3,}/g, '\n\n');
 
@@ -1318,7 +1384,7 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
   const id = `jd-input-${el.dataset.embed ?? 'x'}`;
   el.innerHTML = `
     <label class="visually-hidden" for="${id}">Job description</label>
-    <textarea id="${id}" class="jd-input" rows="4" placeholder="" aria-label="Paste a job post"></textarea>
+    <textarea id="${id}" class="jd-input" rows="4" placeholder="Paste a job post or a public careers URL" aria-label="Paste a job post or URL"></textarea>
     <div class="jd-actions">
       <button class="btn btn-primary" data-action="match">Match</button>
       <button class="btn-link" data-action="sample">Sample</button>
@@ -1326,21 +1392,43 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
     <div class="jd-results" aria-live="polite"></div>`;
   const input = el.querySelector<HTMLTextAreaElement>('textarea')!;
   const results = el.querySelector<HTMLElement>('.jd-results')!;
+  let fetchGen = 0;
 
-  const run = async () => {
-    if (isBareJobUrl(input.value)) {
-      results.innerHTML =
-        '<p class="jd-empty">Paste the job text, not just the link. This matcher runs in your browser and cannot open job-board URLs (CORS / privacy).</p>';
-      return;
-    }
-    const reqs = requirements(input.value);
+  const runMatch = async (text: string) => {
+    const reqs = requirements(text);
     if (!reqs.length) {
-      results.innerHTML = '<p class="jd-empty">Paste something first.</p>';
+      results.innerHTML = '<p class="jd-empty">Could not find requirements in that post. Try pasting the job text.</p>';
       return;
     }
     results.innerHTML = '<p class="jd-empty">Matching…</p>';
-    const { rows, verdict: v, matched } = await analyzeJobDescription(input.value, vault, index);
+    const { rows, verdict: v, matched } = await analyzeJobDescription(text, vault, index);
     results.innerHTML = renderResults(rows, v, matched);
+  };
+
+  const run = async () => {
+    const raw = input.value;
+    if (!raw.trim()) {
+      results.innerHTML = '<p class="jd-empty">Paste something first.</p>';
+      return;
+    }
+
+    if (isBareJobUrl(raw)) {
+      const gen = ++fetchGen;
+      results.innerHTML = '<p class="jd-empty">Fetching job post…</p>';
+      try {
+        const text = await fetchJobUrlText(raw);
+        if (gen !== fetchGen) return;
+        input.value = text;
+        await runMatch(text);
+      } catch {
+        if (gen !== fetchGen) return;
+        results.innerHTML =
+          '<p class="jd-empty">Could not open that URL (job boards block direct browser reads). Paste the job text instead.</p>';
+      }
+      return;
+    }
+
+    await runMatch(raw);
   };
 
   el.querySelector('[data-action="match"]')!.addEventListener('click', run);
