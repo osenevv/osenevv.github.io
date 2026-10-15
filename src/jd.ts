@@ -1444,11 +1444,16 @@ async function getRouteVectors(index: VectorIndex): Promise<Map<Route, Float32Ar
   let cached = ROUTE_VECTOR_CACHE.get(index);
   if (cached) return cached;
   cached = new Map<Route, Float32Array>();
-  const conceptRoutes = ROUTES.filter((r) => r.concept);
-  const concepts = conceptRoutes.map((r) => r.concept!);
-  const vectors = await index.embed(concepts);
-  conceptRoutes.forEach((r, i) => cached!.set(r, vectors[i]));
-  ROUTE_VECTOR_CACHE.set(index, cached);
+  try {
+    const conceptRoutes = ROUTES.filter((r) => r.concept);
+    const concepts = conceptRoutes.map((r) => r.concept!);
+    const vectors = await index.embed(concepts);
+    conceptRoutes.forEach((r, i) => cached!.set(r, vectors[i]));
+    ROUTE_VECTOR_CACHE.set(index, cached);
+  } catch {
+    // Embedding API down — match with lexical routes only.
+    return new Map();
+  }
   return cached;
 }
 
@@ -1658,8 +1663,10 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
       results.innerHTML = '<p class="jd-empty">Could not find requirements in that post. Try pasting the job text.</p>';
       return;
     }
+    // Match immediately on the current index (TF-IDF is instant). Never block the
+    // button on /api/embed — that endpoint does not exist on GitHub Pages.
     results.innerHTML = '<p class="jd-empty">Matching…</p>';
-    await index.ensureSemanticUpgrade();
+    void index.ensureSemanticUpgrade();
     const { rows, verdict: v, matched } = await analyzeJobDescription(text, vault, index);
     results.innerHTML = renderResults(rows, v, matched);
   };
@@ -1690,6 +1697,7 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
     await runMatch(raw);
   };
 
+  // Warm semantic API in the background when available; ignore failures on static hosts.
   input.addEventListener('focus', () => void index.ensureSemanticUpgrade(), { once: true });
   el.querySelector('[data-action="match"]')!.addEventListener('click', run);
   input.addEventListener('keydown', (e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && run());

@@ -109,6 +109,7 @@ function edgeEmbedder(): Embedder {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ texts }),
+        signal: AbortSignal.timeout(12_000),
       });
       if (!res.ok) throw new Error(`Embedding API returned ${res.status}`);
       const data = await res.json();
@@ -200,12 +201,15 @@ export class VectorIndex {
     try {
       this.setStatus({ kind: 'loading', progress: 0.1 });
       const embedder = edgeEmbedder();
+      // Probe first — static hosts (GitHub Pages) have no /api/embed; don't mark
+      // semantic or we'd hang every later query on a 404.
+      await embedder.embed(['probe']);
 
-      // Load precomputed vault vectors to avoid embedding all 95 chunks at runtime
+      // Load precomputed vault vectors to avoid embedding all chunks at runtime
       let precomputed: number[][] | null = null;
       try {
         const vUrl = typeof window !== 'undefined' ? '/vault-vectors.json' : 'http://localhost:5173/vault-vectors.json';
-        const vRes = await fetch(vUrl);
+        const vRes = await fetch(vUrl, { signal: AbortSignal.timeout(8_000) });
         if (vRes.ok) precomputed = await vRes.json();
       } catch {
         // Fall back to building vectors via API
