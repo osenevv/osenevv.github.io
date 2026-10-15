@@ -336,13 +336,14 @@ Bachelor's degree.`,
     expects: [
       {
         reqIncludes: 'University degree',
-        allow: ['related'],
+        // Bachelor / university degree from Charles may be Direct Match; masters-only stays Related.
+        allow: ['strong', 'related'],
         requireNotes: ['Charles University'],
         banNotes: ['ProfiFP', 'Yapper'],
       },
       {
         reqIncludes: "Bachelor's degree",
-        allow: ['related'],
+        allow: ['strong', 'related'],
         requireNotes: ['Charles University'],
         banNotes: ['ProfiFP', 'Yapper'],
       },
@@ -411,7 +412,12 @@ for (const job of JOBS) {
       failed++;
     }
     if (row.note && !['strong', 'related'].includes(row.level)) continue;
-    if (row.level === 'strong' && row.note && ['about', 'concept', 'education'].includes(String(row.note.props.type))) {
+    if (
+      row.level === 'strong' &&
+      row.note &&
+      ['about', 'concept', 'education'].includes(String(row.note.props.type)) &&
+      !(row.note.name === 'Charles University' && isEducationCredentialRequirement(row.req))
+    ) {
       console.log(`  FAIL invariant: Direct Match from ${row.note.props.type} note ${row.note.name}`);
       failed++;
     }

@@ -455,14 +455,16 @@ export function parseJobRequirements(text: string): string[] {
     if (isJobTitle(l) || isJobHeaderLine(l) || isNonRequirementLine(l)) continue;
     if (isCompanyBlurb(l) || isBenefitsLine(l) || isApplyOrProcessLine(l) || isMetaLine(l)) continue;
     // Tiny soft-skill crumbs after period-splitting ("Procesní myšlení.") are noise.
-    // Keep short tech lines ("Proficiency in C#") via language / tech anchors.
+    // Only drop period-terminated crumbs so short bullets like "Czech and English" stay.
     if (
+      /\.\s*$/.test(l) &&
       l.length < 24 &&
       l.split(/\s+/).length <= 3 &&
       !hasTechAnchor(l) &&
       !namedLanguages(l).length &&
       !REQ_SIGNAL.test(l) &&
-      !YEARS_REQUIRED.test(l)
+      !YEARS_REQUIRED.test(l) &&
+      !isSpokenLanguageRequirement(l)
     )
       continue;
     seen.add(key);
@@ -942,7 +944,9 @@ function isAiJob(text: string): boolean {
 }
 
 export function isAlienJobPosting(text: string): boolean {
-  return /\b(barista\b|coffee roast\w*|espresso|latte art|cupping|kavárn\w*|pražič\w* kávy|pilates\w*|reformer|mat pilates|držení těla|páteř\w*|spin\w* alignment|pelvic|dentál\w*|zubn\w*|chrup\w*|dental\b|hygienist\w*|calculus removal|radiographs?|šéfkuchař|kuchař\w*|chef\b|gastronom\w*|haccp|receptur\w*|stavbyvedoucí|staveništ\w*|betonáž\w*|jeřáb\w*|blueprints|superintendent|concrete pouring|excavation|dopravní pilot|pilot\b|letadl\w*|atpl\b|flight time|letov\w* hodin\w*|nouzov\w* postupy|air traffic|učitelsk\w*|učitelka|mateřsk\w* škol\w*|předškoln\w*|kindergarten|preschool|toddler\w*|storytimes?|veterin\w*|lékař\w* pro malá zvířata|veterinary|canine|feline|soft-tissue surgery|kadeřn\w*|barber|hair stylist|instalatér|plumber|pipefitter|corporate lawyer|advokát\w*|soudní spor\w*|litigation|law firm|advokátní kancelář)\b/i.test(
+  // Travel ("nastoupíš do letadla") must not nuke AI/consulting posts that mention flying to clients.
+  if (isTechnicalJobPosting(text)) return false;
+  return /\b(barista\b|coffee roast\w*|espresso|latte art|cupping|kavárn\w*|pražič\w* kávy|pilates\w*|reformer|mat pilates|držení těla|páteř\w*|spin\w* alignment|pelvic|dentál\w*|zubn\w*|chrup\w*|dental\b|hygienist\w*|calculus removal|radiographs?|šéfkuchař|kuchař\w*|chef\b|gastronom\w*|haccp|receptur\w*|stavbyvedoucí|staveništ\w*|betonáž\w*|jeřáb\w*|blueprints|superintendent|concrete pouring|excavation|dopravní pilot|(?<![a-zá-ž])pilot\b|atpl\b|flight time|letov\w* hodin\w*|nouzov\w* postupy|air traffic|učitelsk\w*|učitelka|mateřsk\w* škol\w*|předškoln\w*|kindergarten|preschool|toddler\w*|storytimes?|veterin\w*|lékař\w* pro malá zvířata|veterinary|canine|feline|soft-tissue surgery|kadeřn\w*|barber|hair stylist|instalatér|plumber|pipefitter|corporate lawyer|advokát\w*|soudní spor\w*|litigation|law firm|advokátní kancelář)\b/i.test(
     text,
   );
 }
@@ -1341,6 +1345,7 @@ const ROUTES: Route[] = [
   },
   {
     when: (r) =>
+      !isSpokenLanguageRequirement(r) &&
       /\b(communicat\w*|komunik\w*|present\w*|prezentac\w*|explain\w*|vysvětlov\w*|non-technical|netechnick\w*|written communication|articulate|technical documentation|stakeholder|sdílet know-how|posouvat ostatní)\b/i.test(
         r,
       ) &&
