@@ -23,17 +23,17 @@ const REQ_SIGNAL =
   /\b(must|required|require|need to|should have|we (need|want|require)|looking for|you (will|can|should)|experience|years?|yrs?|degree|bachelor|master|phd|proficient|fluent|hands-on|ability to|knowledge of|skills? in|understanding of|familiarity with|znalost|zkušenost|minimálně|alespoň|požadujeme|očekáváme|výhodou|nice to have|plus if)\b/i;
 
 const SKIP_SECTION_HEADER =
-  /^(#{1,3}\s*)?(what we offer|what you'll get|what you get|employee benefits?|our benefits?|perks?( and benefits)?|why join|why work (with|at)|about (us|the company|our company)|who we are|our mission|our values?|company (profile|overview)|life at |our culture|diversity|equal opportunity|recruitment process|hiring process|nabízíme|benefity|o nás|o společnosti|co (u nás )?nabízíme|proč (u nás|join)|plat a benefity|platové podmínky|mzda|odměna|compensation|salary|lokace|místo výkonu)\b/i;
+  /^(#{1,3}\s*)?(what we offer|what you'll get|what you get|employee benefits?|our benefits?|perks?( and benefits)?|why join|why work (with|at)|about (us|the company|our company)|who we are|our mission|our values?|company (profile|overview)|life at |our culture|diversity|equal opportunity|recruitment process|hiring process|nabízíme|benefity|o nás|o společnosti|co (u nás )?nabízíme|proč (u nás|join|tuhle roli)|plat a benefity|platové podmínky|mzda|odměna|compensation|salary|lokace|místo výkonu|bude tě to bavit|jsme \w+)/i;
 
 const APPLY_SECTION_HEADER =
-  /^(#{1,3}\s*)?(how to apply|apply (now|here|today)?|submit (your )?application|contact (us|hr)?|join (us|our team)|ucházení|jak se (přihlásit|ucházet)|přihláška|výběrové řízení)\s*:?\s*$/i;
+  /^(#{1,3}\s*)?(how to apply|apply (now|here|today)?|submit (your )?application|contact (us|hr)?|join (us|our team)|ucházení|jak se (přihlásit|ucházet)|přihláška|výběrové řízení|chceš vědět víc|rovnou poslat cv)\s*:?\s*$/i;
 
 /** Standalone section titles (not inline "Nice to have: AWS, …"). */
 const MAIN_REQUIREMENT_SECTION_TITLE =
-  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice)\s*:?\s*$/i;
+  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice|co očekáváme|co už máš za sebou|nástroje a dovednosti|jazyky a pobyt)\s*:?\s*$/i;
 
 const KEEP_SECTION_TITLE =
-  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice|main duties|your responsibilities)\s*:?\s*$/i;
+  /^(#{1,3}\s*)?(requirements?|qualifications?|what we (need|want|look for)|your (profile|skills|qualifications)|must have|required skills|key responsibilities|responsibilities|the role|about (the )?role|about the job|what you('ll| will) do|we are looking for|ideal candidate|candidate profile|předpoklady|požadavky|kvalifikace|náplň práce|pracovní náplň|co budete|co hledáme|hledáme|profil kandidáta|your tasks|you will|job description|o pozici|popis pozice|main duties|your responsibilities|co tě čeká|co vlastníš|co očekáváme|co už máš za sebou|nástroje a dovednosti|jazyky a pobyt|výhodou)\s*:?\s*$/i;
 
 type SectionMode = 'body' | 'skip' | 'footer';
 
@@ -47,16 +47,119 @@ function sectionHeaderKind(line: string): 'skip' | 'keep' | 'apply' | 'none' {
   return 'none';
 }
 
+/** True when the user pasted only a job-board link. */
+export function isBareJobUrl(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  return /^https?:\/\/\S+$/i.test(t) || /^www\.\S+$/i.test(t);
+}
+
+/** Turn a pasted www/http job link into an absolute https URL. */
+export function normalizeJobUrl(text: string): string {
+  const t = text.trim();
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^www\./i.test(t)) return `https://${t}`;
+  return t;
+}
+
+/**
+ * Fetch a public job-board page as plain text.
+ * Browsers cannot read most careers sites directly (CORS), so we use the
+ * Jina reader (`r.jina.ai`) which returns markdown and allows cross-origin GETs.
+ * Matching still runs locally on the returned text.
+ */
+export async function fetchJobUrlText(url: string, init?: { signal?: AbortSignal }): Promise<string> {
+  const absolute = normalizeJobUrl(url);
+  if (!/^https?:\/\//i.test(absolute)) throw new Error('Not a URL');
+
+  const reader = `https://r.jina.ai/${absolute}`;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(reader, {
+        headers: { Accept: 'text/plain' },
+        signal: init?.signal ?? AbortSignal.timeout(28000),
+      });
+      if (!res.ok) throw new Error(`Reader returned ${res.status}`);
+      const raw = await res.text();
+      const cleaned = cleanReaderMarkdown(raw);
+      if (cleaned.replace(/\s+/g, ' ').trim().length < 80) throw new Error('Fetched page had too little text');
+      return cleaned;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error('Could not fetch job URL');
+}
+
+/** Section headings that usually mark the start of a real job body (any board). */
+const READER_JOB_BODY_START =
+  /(?:^|\n)#{0,3}\s*\**\s*(about (the )?(job|role)|job description|the role|what you('ll| will) do|responsibilities|key responsibilities|requirements?|qualifications?|must[- ]haves?|your (profile|skills)|who you are|what we('re| are) looking for|ideal candidate|požadavky|kvalifikace|náplň práce|pracovní náplň|co (tě čeká|očekáváme|budete|hledáme|vlastníš)|o pozici|popis pozice|proč (tuhle|tuto) roli|nástroje a dovednosti)\b/i;
+
+/** Strip reader headers / markdown chrome into paste-like plain text (any job board). */
+export function cleanReaderMarkdown(text: string): string {
+  let t = text.replace(/\r\n?/g, '\n');
+  t = t.replace(/^Title:\s*.*$/m, '');
+  t = t.replace(/^URL Source:\s*.*$/m, '');
+  t = t.replace(/^Markdown Content:\s*/m, '');
+  t = t.replace(/^Warning:\s*.*$/gm, '');
+  t = t.replace(/^Published Time:\s*.*$/gm, '');
+
+  // Drop cookie / consent chrome before the job body when we can find a section heading.
+  const start = t.search(READER_JOB_BODY_START);
+  if (start > 0) t = t.slice(start);
+
+  // Many boards reprint the same page twice in reader output — cut at a repeated heading.
+  t = cutRepeatedReaderHeadings(t);
+
+  return t
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/\*\*/g, '')
+    .replace(/!\[[^\]]*]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)]\([^)]*\)/g, '$1')
+    .replace(/^\*\s+/gm, '- ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** If the same heading line appears again later, keep only the first copy. */
+function cutRepeatedReaderHeadings(text: string): string {
+  const headingRe = /(?:^|\n)(#{1,3}[^\n]{8,120})(?=\n|$)/g;
+  const seen = new Map<string, number>();
+  for (const m of text.matchAll(headingRe)) {
+    if (m.index == null) continue;
+    const norm = m[1]
+      .replace(/[#*]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    if (norm.length < 10) continue;
+    const prev = seen.get(norm);
+    // Reprint blocks can be short in fixtures; still cut when the same heading returns.
+    if (prev != null && m.index - prev > 120) return text.slice(0, m.index);
+    seen.set(norm, m.index);
+  }
+  return text;
+}
+
 /** Normalize pasted HTML, bullets, and line endings from jobs boards. */
 export function normalizeJobPaste(text: string): string {
   const expanded = text
     .replace(/\r\n?/g, '\n')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/\u00a0/g, ' ')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/\*\*/g, '')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(ul|ol|li|div|p|tr)>\s*/gi, '\n')
     .replace(/<p[^>]*>\s*/gi, '\n')
     .replace(/<li[^>]*>\s*/gi, '\n- ')
     .replace(/<[^>]+>/g, '')
+    .replace(/^\*\s+/gm, '- ')
     .replace(/[\u2022\u2023\u25E6\u25AA\u25CF\u2219\u00B7]\s*/g, '\n- ')
     .replace(/\n{3,}/g, '\n\n');
 
@@ -300,15 +403,35 @@ function unprotectAbbreviations(line: string): string {
     .replace(/(\d+)⟦v⟧(\d+)/g, '$1.$2');
 }
 
+/** Split into lines; keep bullets intact so Czech multi-sentence bullets stay one requirement. */
+function splitRequirementSourceLines(text: string): string[] {
+  const out: string[] = [];
+  for (const line of text.split('\n')) {
+    if (/^\s*(?:[-*•]|\d+[.)])\s+\S/.test(line)) {
+      out.push(line);
+      continue;
+    }
+    out.push(...line.split(/(?<=\.)\s+(?=[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ])/));
+  }
+  return out;
+}
+
+function requirementPriority(line: string): number {
+  if (hasTechAnchor(line) || isRetrievalRequirement(line) || isLlmQualityRequirement(line)) return 0;
+  if (REQ_SIGNAL.test(line) || YEARS_REQUIRED.test(line) || isSpokenLanguageRequirement(line)) return 1;
+  if (line.length >= 40) return 2;
+  return 3;
+}
+
 /** Split job text into requirement lines without breaking e.g., versions, or C#. */
 export function parseJobRequirements(text: string): string[] {
   const protectedText = protectAbbreviations(
     trimPreambleBeforeRequirements(stripNonRequirementSections(stripWebPageJunk(normalizeJobPaste(text)))),
   );
   const seen = new Set<string>();
-  const out: string[] = [];
+  const candidates: string[] = [];
   let first = true;
-  for (const raw of protectedText.split(/\n|(?<=\.)\s+(?=[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ])/)) {
+  for (const raw of splitRequirementSourceLines(protectedText)) {
     const l = unprotectAbbreviations(raw.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim());
     const key = l.toLowerCase();
     if (!l) continue;
@@ -316,14 +439,42 @@ export function parseJobRequirements(text: string): string[] {
     first = false;
     if (isFirst && isPostingTitle(raw, l)) continue;
     if (l.length < 8 || seen.has(key)) continue;
+    // Drop bare section titles ("Requirements", "Požadavky") but keep "Nice to have: AWS, Airflow".
+    const headerKind = sectionHeaderKind(l);
+    if (headerKind !== 'none') {
+      const inline = l.match(/^[^:\n]{0,80}:\s+(.+)$/);
+      const withoutTitle = inline?.[1]?.trim() ?? '';
+      if (withoutTitle.length < 8) continue;
+      const contentKey = withoutTitle.toLowerCase();
+      if (seen.has(contentKey)) continue;
+      seen.add(contentKey);
+      candidates.push(withoutTitle);
+      continue;
+    }
     if (NOT_A_REQUIREMENT.test(l)) continue;
     if (isJobTitle(l) || isJobHeaderLine(l) || isNonRequirementLine(l)) continue;
     if (isCompanyBlurb(l) || isBenefitsLine(l) || isApplyOrProcessLine(l) || isMetaLine(l)) continue;
+    // Tiny soft-skill crumbs after period-splitting ("Procesní myšlení.") are noise.
+    // Only drop period-terminated crumbs so short bullets like "Czech and English" stay.
+    if (
+      /\.\s*$/.test(l) &&
+      l.length < 24 &&
+      l.split(/\s+/).length <= 3 &&
+      !hasTechAnchor(l) &&
+      !namedLanguages(l).length &&
+      !REQ_SIGNAL.test(l) &&
+      !YEARS_REQUIRED.test(l) &&
+      !isSpokenLanguageRequirement(l)
+    )
+      continue;
     seen.add(key);
-    out.push(l);
-    if (out.length >= 25) break;
+    candidates.push(l);
   }
-  return out;
+  if (candidates.length <= 25) return candidates;
+  // Prefer tech / signal lines so soft Czech fluff cannot crowd out RAG/Python bullets.
+  const preferred = candidates.filter((c) => requirementPriority(c) <= 1);
+  const rest = candidates.filter((c) => requirementPriority(c) > 1);
+  return [...preferred, ...rest].slice(0, 25);
 }
 
 const ROLE_WORD =
@@ -793,7 +944,9 @@ function isAiJob(text: string): boolean {
 }
 
 export function isAlienJobPosting(text: string): boolean {
-  return /\b(barista\b|coffee roast\w*|espresso|latte art|cupping|kavárn\w*|pražič\w* kávy|pilates\w*|reformer|mat pilates|držení těla|páteř\w*|spin\w* alignment|pelvic|dentál\w*|zubn\w*|chrup\w*|dental\b|hygienist\w*|calculus removal|radiographs?|šéfkuchař|kuchař\w*|chef\b|gastronom\w*|haccp|receptur\w*|stavbyvedoucí|staveništ\w*|betonáž\w*|jeřáb\w*|blueprints|superintendent|concrete pouring|excavation|dopravní pilot|pilot\b|letadl\w*|atpl\b|flight time|letov\w* hodin\w*|nouzov\w* postupy|air traffic|učitelsk\w*|učitelka|mateřsk\w* škol\w*|předškoln\w*|kindergarten|preschool|toddler\w*|storytimes?|veterin\w*|lékař\w* pro malá zvířata|veterinary|canine|feline|soft-tissue surgery|kadeřn\w*|barber|hair stylist|instalatér|plumber|pipefitter|corporate lawyer|advokát\w*|soudní spor\w*|litigation|law firm|advokátní kancelář)\b/i.test(
+  // Travel ("nastoupíš do letadla") must not nuke AI/consulting posts that mention flying to clients.
+  if (isTechnicalJobPosting(text)) return false;
+  return /\b(barista\b|coffee roast\w*|espresso|latte art|cupping|kavárn\w*|pražič\w* kávy|pilates\w*|reformer|mat pilates|držení těla|páteř\w*|spin\w* alignment|pelvic|dentál\w*|zubn\w*|chrup\w*|dental\b|hygienist\w*|calculus removal|radiographs?|šéfkuchař|kuchař\w*|chef\b|gastronom\w*|haccp|receptur\w*|stavbyvedoucí|staveništ\w*|betonáž\w*|jeřáb\w*|blueprints|superintendent|concrete pouring|excavation|dopravní pilot|(?<![a-zá-ž])pilot\b|atpl\b|flight time|letov\w* hodin\w*|nouzov\w* postupy|air traffic|učitelsk\w*|učitelka|mateřsk\w* škol\w*|předškoln\w*|kindergarten|preschool|toddler\w*|storytimes?|veterin\w*|lékař\w* pro malá zvířata|veterinary|canine|feline|soft-tissue surgery|kadeřn\w*|barber|hair stylist|instalatér|plumber|pipefitter|corporate lawyer|advokát\w*|soudní spor\w*|litigation|law firm|advokátní kancelář)\b/i.test(
     text,
   );
 }
@@ -1155,15 +1308,17 @@ const ROUTES: Route[] = [
 
   {
     when: (r: string) =>
-      (/\b(business analy\w*|use cases?|business value|roi|business cases?|process analysis|requirements gathering)\b/i.test(r) ||
-       /byznysov\S*\s+(analýz|kalkulac|plán|hodnot)|finančn\S*\s+plán/i.test(r)) &&
+      (/\b(business analy\w*|use cases?|business value|roi|business cases?|process analysis|requirements gathering|procesn[ií]|proces (popsat|změř|analy)|potřebě klienta|návrh funkčního)\b/i.test(
+        r,
+      ) ||
+        /byznysov\S*\s+(analýz|kalkulac|plán|hodnot)|finančn\S*\s+plán/i.test(r)) &&
       !/\b(proof of concept|prototyp\w*|technically feasible)\b/i.test(r),
     concept: 'designing use cases, assessing business value, and business analysis',
     notes: [N.profifp, N.hegelmann],
-    proof: /\b(business analyst|use-case|roi|business cases?|needs analysis)\b/i,
+    proof: /\b(business analyst|use-case|roi|business cases?|needs analysis|stakeholders?|clients?|automat\w*)\b/i,
   },
   {
-    when: /\b(adoption|rolling out|roll out|rollout|digital tools|process automation)\b/i,
+    when: /\b(adoption|rolling out|roll out|rollout|digital tools|process automation|automatizovat|automatiza[cč]n)\b/i,
     concept: 'AI adoption, rolling out digital tools, and process automation in organizations',
     notes: [N.hegelmann],
     proof: /\b(agentic workflows|automat\w*|agent pipelines)\b/i,
@@ -1176,7 +1331,7 @@ const ROUTES: Route[] = [
   },
   {
     when: (r: string) =>
-      /\b(business (brief|needs|requirements)|briefs?|stakeholders?|clients?|klient\w*|customers?|zákazník\w*|b2b|sales|selling|prodej\w*|prodávajíc\w*|kupujíc\w*|obchod\w*|cross-functional|it and business|real estate|realtor|broker|nemovitost\w*|realitn\w*|klientské schůzky|home sellers|property viewings)\b/i.test(
+      /\b(business (brief|needs|requirements)|briefs?|stakeholders?|clients?|klient\w*|customers?|zákazník\w*|byznys|propojuješ byznys|b2b|sales|selling|prodej\w*|prodávajíc\w*|kupujíc\w*|obchod\w*|cross-functional|it and business|real estate|realtor|broker|nemovitost\w*|realitn\w*|klientské schůzky|home sellers|property viewings)\b/i.test(
         r,
       ) &&
       !/\b(vpn|dhcp|network|email|software|ftp|torrent)\s+clients?\b/i.test(r) &&
@@ -1186,11 +1341,12 @@ const ROUTES: Route[] = [
       ),
     concept: 'B2B sales, direct sales, commercial selling, client relationship management, negotiation, and business outreach',
     notes: [N.profifp, N.strengths, N.hegelmann],
-    proof: /\b(stakeholders?|clients?|b2b|sales|outreach|freight customers?|customers?)\b/i,
+    proof: /\b(stakeholders?|clients?|b2b|sales|outreach|freight customers?|customers?|automat\w*|agent)\b/i,
   },
   {
     when: (r) =>
-      /\b(communicat\w*|komunik\w*|present\w*|prezentac\w*|explain\w*|vysvětlov\w*|non-technical|netechnick\w*|written communication|articulate|technical documentation|stakeholder)\b/i.test(
+      !isSpokenLanguageRequirement(r) &&
+      /\b(communicat\w*|komunik\w*|present\w*|prezentac\w*|explain\w*|vysvětlov\w*|non-technical|netechnick\w*|written communication|articulate|technical documentation|stakeholder|sdílet know-how|posouvat ostatní)\b/i.test(
         r,
       ) &&
       !/\b(patient|nursing|clinical|care documentation|parent\w*|rodič\w*|dět\w*|child\w*|toddler)\b/i.test(
@@ -1201,7 +1357,7 @@ const ROUTES: Route[] = [
     proof: /\b(non-technical|presenting|communicat\w*|documentation|stakeholder|sales|clients?|customers?|outreach)\b/i,
   },
   {
-    when: /\b(independen\w*|own work|on (your|their) own|self-direct\w*|ownership|autonom\w*|self-starter|proactive|samostatn\w*|vlastní práce)\b/i,
+    when: /\b(independen\w*|own work|on (your|their) own|self-direct\w*|ownership|autonom\w*|self-starter|proactive|samostatn\w*|vlastní práce|dotahuješ|hands-on přístup)\b/i,
     concept: 'independent work, self-directed ownership, and planning own work',
     notes: [N.strengths],
     proof: /\b(independent|self-directed|ownership)\b/i,
@@ -1223,6 +1379,12 @@ const ROUTES: Route[] = [
     concept: 'teamwork, collaboration, and international cross-functional teams',
     notes: [N.hegelmann, N.strengths],
     proof: /\b(international|teams?|colleagues|stakeholders?)\b/i,
+  },
+  {
+    when: /\b(\d+[^+]{0,20}(let|roky|roků)\b.{0,40}\b(praxe|zkušenost)|praxe.{0,40}\b(byznys|technick)|v ostrém provozu)\b/i,
+    concept: 'years of hands-on experience combining business and technical delivery',
+    notes: [N.strengths, N.hegelmann, N.outlier],
+    proof: /\b(years of programming|experience|shipped|production|stakeholders?)\b/i,
   },
   { when: /\b(years? of programming|programming experience|coding experience)\b/i, notes: [N.strengths], proof: /\byears of programming\b/i },
   { when: /\b(open[- ]source|github)\b/i, notes: [N.zettelLinker, N.yapper, N.mafia], proof: /\bgithub\b/i },
@@ -1480,7 +1642,7 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
   const id = `jd-input-${el.dataset.embed ?? 'x'}`;
   el.innerHTML = `
     <label class="visually-hidden" for="${id}">Job description</label>
-    <textarea id="${id}" class="jd-input" rows="4" placeholder="" aria-label="Paste a job post"></textarea>
+    <textarea id="${id}" class="jd-input" rows="4" placeholder="Paste a job post or a public careers URL" aria-label="Paste a job post or URL"></textarea>
     <div class="jd-actions">
       <button class="btn btn-primary" data-action="match">Match</button>
       <button class="btn-link" data-action="sample">Sample</button>
@@ -1488,17 +1650,44 @@ export function mountJdMatcher(el: HTMLElement, vault: Vault, index: VectorIndex
     <div class="jd-results" aria-live="polite"></div>`;
   const input = el.querySelector<HTMLTextAreaElement>('textarea')!;
   const results = el.querySelector<HTMLElement>('.jd-results')!;
+  let fetchGen = 0;
 
-  const run = async () => {
-    const reqs = requirements(input.value);
+  const runMatch = async (text: string) => {
+    const reqs = requirements(text);
     if (!reqs.length) {
-      results.innerHTML = '<p class="jd-empty">Paste something first.</p>';
+      results.innerHTML = '<p class="jd-empty">Could not find requirements in that post. Try pasting the job text.</p>';
       return;
     }
     results.innerHTML = '<p class="jd-empty">Matching…</p>';
     await index.ensureSemanticUpgrade();
-    const { rows, verdict: v, matched } = await analyzeJobDescription(input.value, vault, index);
+    const { rows, verdict: v, matched } = await analyzeJobDescription(text, vault, index);
     results.innerHTML = renderResults(rows, v, matched);
+  };
+
+  const run = async () => {
+    const raw = input.value;
+    if (!raw.trim()) {
+      results.innerHTML = '<p class="jd-empty">Paste something first.</p>';
+      return;
+    }
+
+    if (isBareJobUrl(raw)) {
+      const gen = ++fetchGen;
+      results.innerHTML = '<p class="jd-empty">Fetching job post…</p>';
+      try {
+        const text = await fetchJobUrlText(raw);
+        if (gen !== fetchGen) return;
+        input.value = text;
+        await runMatch(text);
+      } catch {
+        if (gen !== fetchGen) return;
+        results.innerHTML =
+          '<p class="jd-empty">Could not open that URL (job boards block direct browser reads). Paste the job text instead.</p>';
+      }
+      return;
+    }
+
+    await runMatch(raw);
   };
 
   input.addEventListener('focus', () => void index.ensureSemanticUpgrade(), { once: true });
