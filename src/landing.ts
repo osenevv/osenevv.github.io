@@ -75,7 +75,7 @@ export async function renderLanding(
           <button class="btn btn-lg" data-copy="${EMAIL}">Copy my email</button>
           <a class="btn btn-lg" href="${CV_URL}" download>Download CV</a>
           <a class="btn-link" href="https://github.com/osenevv" target="_blank" rel="noopener">GitHub ↗</a>
-          <a class="btn-link" href="https://linkedin.com/in/vosenev" target="_blank" rel="noopener">LinkedIn ↗</a>
+          <a class="btn-link" href="https://linkedin.com/in/osenev" target="_blank" rel="noopener">LinkedIn ↗</a>
         </div>
       </div>
       <figure class="hero-graph">
@@ -160,7 +160,7 @@ export async function renderLanding(
         <a class="btn btn-lg" href="${CV_URL}" download>Download CV</a>
       </div>
       <div class="contact-links contact-small">
-        <a class="btn-link" href="https://linkedin.com/in/vosenev" target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a class="btn-link" href="https://linkedin.com/in/osenev" target="_blank" rel="noopener">LinkedIn ↗</a>
         <a class="btn-link" href="https://github.com/osenevv" target="_blank" rel="noopener">GitHub ↗</a>
         <a class="btn-link" href="${noteHref('Writing/How this vault works')}">How this site works</a>
       </div>

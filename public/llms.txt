@@ -2,7 +2,7 @@
 
 > AI engineer in Prague, CZ (remote-ready). Retrieval (RAG, embeddings, vector search), LLM evaluation and AI agents. Open to work. Speaks Russian, English and Czech. CS at Charles University.
 
-Contact: osenevvova@gmail.com · https://github.com/osenevv · https://linkedin.com/in/vosenev
+Contact: osenevvova@gmail.com · https://github.com/osenevv · https://linkedin.com/in/osenev
 CV: /Vladimir_Osenev_CV.pdf
 
 ## Projects
