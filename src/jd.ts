@@ -785,6 +785,7 @@ const NOTE_IDS = {
   mafia: 'Projects/Mafia Tracker',
   zettelLinker: 'Projects/ZettelLinker',
   yapper: 'Projects/Yapper',
+  vibeCleaner: 'Projects/VibeCleaner',
   satFreedom: 'Projects/SatFreedom',
   paw: 'Projects/Personal Agentic Wiki',
   zettelkasten: 'Concepts/Zettelkasten',
@@ -1166,7 +1167,7 @@ const ROUTES: Route[] = [
   {
     when: /\b(hallucinat\w*|bias|ai risks?|responsible ai|guardrails?|prompt injection|what ai can and can'?t do|(use|using) (it|ai) safely)\b/i,
     concept: 'mitigating hallucinations, AI safety, prompt injection, and guardrails',
-    notes: [N.outlier, N.yapper],
+    notes: [N.outlier, N.vibeCleaner, N.yapper],
     proof: /\b(hallucinat\w*|failure modes|red-teaming|prompt injection|reward hacking|made up)\b/i,
   },
   {
@@ -1209,26 +1210,26 @@ const ROUTES: Route[] = [
   // Prefer a note that covers every required language when the bullet uses "and"/commas; OR-lists still match any.
   {
     when: (r) => namedLanguages(r).length > 0,
-    notes: [N.zettelLinker, N.yapper, N.outlier, N.mafia, N.paw, N.satFreedom, N.contactManager, N.charles, N.arnoldC],
+    notes: [N.zettelLinker, N.yapper, N.vibeCleaner, N.outlier, N.mafia, N.paw, N.satFreedom, N.contactManager, N.charles, N.arnoldC],
     proof: (ev, req) => evidenceCoversLanguages(req, ev),
   },
 
   {
     when: /\b(docker\w*|containers?|kontejner\w*|ci\/cd|ci|github actions|devops|deployments?|nasazení)\b/i,
     concept: 'Docker containers, CI/CD pipelines, GitHub Actions, and deployments',
-    notes: [N.mafia, N.yapper, N.zettelLinker],
+    notes: [N.mafia, N.vibeCleaner, N.yapper, N.zettelLinker],
     proof: /\b(docker|ci|github actions)\b/i,
   },
   {
     when: /\b(linux\w*|unix\w*|bash\w*|shell\w*|command[- ]line|cli|příkazov\w* řádk\w*)\b/i,
     concept: 'Linux environment, bash scripting, and command-line tools',
-    notes: [N.charles, N.zettelLinker],
+    notes: [N.charles, N.vibeCleaner, N.zettelLinker],
     proof: /\b(linux|unix|bash|shell|cli)\b/i,
   },
   {
     when: /\b(tests?|testing|pytest\w*|unit tests?|tdd|software engineering principles|code quality|testov\w*|jednotkov\w* test\w*|regresn\w* test\w*)\b/i,
     concept: 'software engineering principles, unit testing, automated tests, pytest, and code quality',
-    notes: [N.zettelLinker, N.yapper, N.satFreedom],
+    notes: [N.zettelLinker, N.vibeCleaner, N.yapper, N.satFreedom],
     proof: /\b(pytest|unit tests|test suite)\b/i,
   },
   {
@@ -1264,7 +1265,7 @@ const ROUTES: Route[] = [
   {
     when: /\b(compiler\w*|interpreter\w*|překladač\w*|interpret\w*|ast\b|parsing|grammar\w*|gramatik\w*|lexing|lexer|syntax tree|object-oriented|oop|objektov\w* orientovan\w*)\b/i,
     concept: 'compilers, interpreters, AST parsing, grammars, and object-oriented programming',
-    notes: [N.arnoldC, N.outlier],
+    notes: [N.arnoldC, N.vibeCleaner, N.outlier],
     proof: /\b(compiler|interpreter|oop|ast|parsing|code generation|scala|stack vm|lexer)\b/i,
   },
   {
@@ -1387,18 +1388,18 @@ const ROUTES: Route[] = [
     proof: /\b(years of programming|experience|shipped|production|stakeholders?)\b/i,
   },
   { when: /\b(years? of programming|programming experience|coding experience)\b/i, notes: [N.strengths], proof: /\byears of programming\b/i },
-  { when: /\b(open[- ]source|github)\b/i, notes: [N.zettelLinker, N.yapper, N.mafia], proof: /\bgithub\b/i },
+  { when: /\b(open[- ]source|github)\b/i, notes: [N.zettelLinker, N.yapper, N.vibeCleaner, N.mafia], proof: /\bgithub\b/i },
 
   // Broad AI wording last, so a specific route (business analyst, RAG, Python…) wins ties.
   {
     when: /\b(ai|ml)\b[^.]{0,40}\bprojects?\b|\bprojects?\b[^.]{0,40}\b(ai|ml)\b/i,
-    notes: [N.zettelLinker, N.yapper],
+    notes: [N.zettelLinker, N.yapper, N.vibeCleaner],
     proof: /\b(embeddings?|whisper|semantic)\b/i,
   },
   {
     when: /\b(agents?|agentic|agent\w*|tool[- ]?calling|orchestrat\w*|mcp|langgraph|langchain|multi-step|assistants?|automat\w*)\b/i,
     concept: 'autonomous ai agents, tool-calling agent workflows, orchestration, and process automation',
-    notes: [N.hegelmann, N.zettelLinker, N.paw, N.yapper],
+    notes: [N.hegelmann, N.vibeCleaner, N.zettelLinker, N.paw, N.yapper],
     proof: /\b(agent\w*|langgraph|langchain|automat\w*)\b/i,
   },
   {

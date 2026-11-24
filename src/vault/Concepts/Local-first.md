@@ -11,6 +11,6 @@ Trade-offs I care about in practice:
 - **Latency** — no round trip for every query; embeddings and STT run where the files already live.
 - **Sync** — when needed, explicit export/import or git beats opaque cloud mirrors; CRDTs matter for multi-device editors, less for personal vaults.
 
-Applied in [[Yapper]] (on-device Whisper + local SQLite), [[ZettelLinker]] (local MiniLM embeddings), [[SatFreedom]] (portfolio data on disk), and this site (in-browser transformer search — no upload of your pasted job post to my server).
+Applied in [[Yapper]] (on-device Whisper + local SQLite), [[ZettelLinker]] (local MiniLM embeddings), [[VibeCleaner]] (zero-network tree-sitter gate and offline judge mode), [[SatFreedom]] (portfolio data on disk), and this site (in-browser transformer search — no upload of your pasted job post to my server).
 
 Related: [[Wikilinks]], [[Personal Agentic Wiki]]

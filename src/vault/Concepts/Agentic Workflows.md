@@ -14,5 +14,6 @@ LLMs that plan, call tools and act over multiple steps instead of answering once
 
 ## In my work
 - Lead collection pipelines at [[Hegelmann Group]]
+- Pre-ship security gating, `Stop` / `PostToolUse` agent hooks, and tamper-guarded `--autofix` loops in [[VibeCleaner]]
 - Inbox triage and note writing in the [[Personal Agentic Wiki]]
 - Structured memo extraction in [[Yapper]]

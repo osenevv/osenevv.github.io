@@ -12,6 +12,6 @@ Measuring whether a model or an LLM system actually does the job — and catchin
 - **Automate the boring 80%** — schema checks, tool-call validation, reference matching — and keep humans for judgement calls.
 - **Agents fail in the middle.** Multi-step tasks need step-level checks, not just final-answer grading.
 
-From [[Outlier.AI]]: post-training reasoning alignment, reference code targets, and chain-of-thought verification for frontier models.
+From [[Outlier.AI]]: post-training reasoning alignment, reference code targets, and chain-of-thought verification for frontier models. In [[VibeCleaner]]: a labeled dev/holdout/blind eval harness measuring precision, recall, F1, and FPR across security and anti-slop detectors.
 
 Related: [[RAG]], [[Agentic Workflows]]

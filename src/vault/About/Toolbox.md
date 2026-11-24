@@ -18,7 +18,7 @@ OpenAI and Anthropic Claude APIs, structured outputs and JSON schemas, function 
 [[RAG]] over notes/docs, sentence-transformer [[Embeddings]], semantic [[Vector Search]], [[HNSW]] via usearch, LangChain and LangGraph. FAISS, Qdrant, pgvector, Weaviate, Pinecone share the same ideas as [[ZettelLinker]]. See [[Full-text Search]] for how keyword and vector search complement each other.
 
 ## Alignment, evaluation and quality
-Post-training alignment, [[LLM Evaluation]] benchmarks, chain-of-thought auditing, ground-truth reference code for frontier models — [[Outlier.AI]].
+Post-training alignment, [[LLM Evaluation]] benchmarks, chain-of-thought auditing, ground-truth reference code for frontier models — [[Outlier.AI]]. Pre-ship security, AST static analysis, and anti-slop gating in CI and agent hooks — [[VibeCleaner]].
 
 ## Speech and data
 **Whisper** speech-to-text, data cleaning and enrichment, web data collection and lead-generation pipelines at [[Hegelmann Group]].
