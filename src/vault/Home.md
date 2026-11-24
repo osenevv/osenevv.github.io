@@ -21,7 +21,7 @@ I’m an AI engineer specializing in **semantic retrieval (RAG)**, **autonomous 
 - [[ZettelLinker]] — finds missing links in an Obsidian vault by meaning, with local [[Embeddings]]
 - [[Yapper]] — voice notes to tasks and long-term memory, transcribed on-device
 - [[Mafia Tracker]] — live tournament platform with real-time WebSockets and a ratio-based Elo engine
-- [[VibeCleaner]] — pre-ship security and anti-slop harness for AI-generated apps (tree-sitter gate + semantic checks; CLI alias `vibeguard`)
+- [[VibeCleaner]] — pre-ship security and anti-slop scanner for AI-generated apps (tree-sitter gate + semantic checks)
 - [[SatFreedom]] — a private, [[Local-first]] desktop app in C# and .NET
 - [[Personal Agentic Wiki]] — my own second brain, run by agents
 - [[Outlier.AI]] — post-training alignment, [[LLM Evaluation]], and reference code for frontier models
