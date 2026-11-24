@@ -1,7 +1,7 @@
 ---
 type: project
 featured: true
-order: 3
+order: 4
 kind: Real-time web & algorithms
 summary: Live tournament platform for 10-player Mafia: the judge runs the table from one screen, every display updates over WebSockets, and a ratio-based Elo engine tracks seasons.
 flow: Judge action > Django view (HTTP) > Channels broadcast > Every screen updates > Elo + season standings

@@ -27,6 +27,6 @@ A custom interpreter and virtual machine built in **C# / .NET 9** for **ArnoldC*
 - **Recursive Descent Parser**: Transforms flat token streams into a validated Abstract Syntax Tree (AST), checking block closures and catching unbalanced control flow before runtime.
 - **Stack-Based Execution Engine**: An evaluation runtime maintaining call frames, variable symbol tables, and stack operations.
 
-This compiler-engineering foundation carried directly into treating text as structural data later when building [[ZettelLinker]]'s wikilink parser.
+This compiler-engineering foundation carried into treating text and code as structural data in [[VibeCleaner]]'s tree-sitter AST gate and [[ZettelLinker]]'s wikilink parser.
 
 Code: [github.com/osenevv/ArnoldC-CSharp](https://github.com/osenevv/ArnoldC-CSharp)

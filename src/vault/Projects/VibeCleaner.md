@@ -1,7 +1,7 @@
 ---
 type: project
 featured: true
-order: 4
+order: 1
 kind: AI security & evals
 summary: Turns messy AI-generated repos into production-ready code. Deletes provable code and UI slop, probes live behavior, and repairs bugs on isolated git worktrees.
 flow: Vibe-coded repo > <1 s tree-sitter gate ($0) > multi-judge semantic audit > Docker & browser probes > worktree-isolated autofix

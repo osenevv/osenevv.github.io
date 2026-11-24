@@ -18,10 +18,10 @@ I’m an AI engineer specializing in **semantic retrieval (RAG)**, **autonomous 
 > Paste your job description into [[Match a job description]]. It ranks my work against your requirements using the same vector index that powers search.
 
 ## Where to start
+- [[VibeCleaner]] — turns messy AI-generated repos into production-ready code with a tree-sitter gate, semantic checks, and worktree-isolated autofix
 - [[ZettelLinker]] — finds missing links in an Obsidian vault by meaning, with local [[Embeddings]]
 - [[Yapper]] — voice notes to tasks and long-term memory, transcribed on-device
 - [[Mafia Tracker]] — live tournament platform with real-time WebSockets and a ratio-based Elo engine
-- [[VibeCleaner]] — turns messy AI-generated repos into production-ready code with a tree-sitter gate, semantic checks, and a tamper-guarded autofix loop
 - [[SatFreedom]] — a private, [[Local-first]] desktop app in C# and .NET
 - [[Personal Agentic Wiki]] — my own second brain, run by agents
 - [[Outlier.AI]] — post-training alignment, [[LLM Evaluation]], and reference code for frontier models

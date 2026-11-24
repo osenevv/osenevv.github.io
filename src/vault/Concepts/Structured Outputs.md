@@ -15,7 +15,8 @@ Constraining a language model so its output always matches a strict schema (JSON
 - **Fail fast and drop:** if output is truncated or invalid, discard it rather than regex-patching a half-object.
 
 ## In my work
+- In [[VibeCleaner]], Layer 2 flags routes that skip boundary schema validation (Pydantic or Zod), and reports emit fail-closed JSON and SARIF 2.1.0 outputs.
 - In [[Yapper]], every task and memory comes back through a schema and must quote the transcript; anything that fails validation is dropped, so nothing the model made up reaches the user.
 - In [[Agentic Workflows]], tools take typed arguments and enums rather than free text.
 
-Related: [[Agentic Workflows]], [[LLM Evaluation]], [[Yapper]]
+Related: [[VibeCleaner]], [[Agentic Workflows]], [[LLM Evaluation]], [[Yapper]]

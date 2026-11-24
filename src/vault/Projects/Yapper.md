@@ -1,7 +1,7 @@
 ---
 type: project
 featured: true
-order: 2
+order: 3
 kind: AI + voice
 summary: Local macOS voice assistant — on-device Whisper STT, quoted tasks, long-term memory, and Telegram audio capture.
 flow: Voice > on-device Whisper > quoted tasks & memories > review > search / Obsidian

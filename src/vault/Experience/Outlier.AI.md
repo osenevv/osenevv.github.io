@@ -18,6 +18,6 @@ Post-training alignment, reasoning evaluation, and gold-standard code generation
 - **Automated eval harnesses**: Built Python verification scripts to test API contracts, JSON schemas, and function-calling parameters before model updates were deployed.
 
 > [!note] The Unfair Advantage
-> I didn’t just use frontier models—I spent over a year shaping how they think, reason, and write code. I know their failure modes, their hallucinations, and their shortcuts, which makes me uniquely equipped to engineer reliable AI systems in production.
+> I spent over a year shaping how frontier models reason and write code. Knowing their failure modes, hallucinations, and reward-hacking shortcuts led to [[VibeCleaner]], which catches and repairs those same mistakes in AI-generated repositories.
 
-Related: [[LLM Evaluation]], [[Agentic Workflows]], [[Structured Outputs]], [[Hegelmann Group]]
+Related: [[VibeCleaner]], [[LLM Evaluation]], [[Agentic Workflows]], [[Structured Outputs]], [[Hegelmann Group]]

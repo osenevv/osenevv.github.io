@@ -6,10 +6,10 @@ Contact: osenevvova@gmail.com · https://github.com/osenevv · https://linkedin.
 CV: /Vladimir_Osenev_CV.pdf
 
 ## Projects
+- VibeCleaner (github.com/osenevv/vibecleaner): pre-ship cleanup, security, and repair harness that turns messy AI-generated repositories into production-ready code; <1 s local tree-sitter gate ($0), deterministic code/prose/UI slop removal, multi-provider decision judge (<$0.001/PR), Docker test & Playwright runtime probes, and worktree-isolated autofix with tamper guard and GitHub Action SARIF.
 - ZettelLinker (github.com/osenevv/zettlellinker): finds missing links in an Obsidian vault by meaning using local sentence-transformer embeddings; LangGraph pipeline; 0.38 ms median query over 10,000 vectors.
 - Yapper (github.com/osenevv/Yapper): macOS app turning voice notes into tasks and long-term memory; on-device transcription; CI on Python 3.10–3.12.
 - Mafia Tracker (github.com/osenevv/mafia-tracker): live tournament platform for 10-player Mafia; Django Channels WebSockets push game state to every screen; ratio-based Elo engine.
-- VibeCleaner (github.com/osenevv/vibecleaner): pre-ship cleanup, security, and repair harness that turns messy AI-generated repositories into production-ready code; <1 s local tree-sitter gate ($0), deterministic code/prose/UI slop removal, multi-provider decision judge (<$0.001/PR), Docker test & Playwright runtime probes, and worktree-isolated autofix with tamper guard and GitHub Action SARIF.
 - SatFreedom (github.com/osenevv/SatFreedom): private, watch-only Bitcoin savings journal; C#/.NET with Avalonia.
 - Personal Agentic Wiki: personal knowledge base maintained by LLM agents; this website is built from a slice of it.
 

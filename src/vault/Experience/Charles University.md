@@ -19,7 +19,7 @@ Canonical evidence for *university degree in a technical/mathematical field*, *b
 
 Capstone: [[Mafia Tracker]]. C++ class project: [[Contact Manager]].
 
-**Evidence type: university coursework.** Home for Matfyz **C++**, **Haskell**, **Prolog**, **Python**, **NLP**, **machine learning**, **computer vision**, **video retrieval**, **YOLO**, **CLIP**, **SQL**, **Linux**, and **networking** basics — coursework depth. Shipped product work: [[Outlier.AI]], [[Hegelmann Group]], [[ZettelLinker]], [[Yapper]].
+**Evidence type: university coursework.** Home for Matfyz **C++**, **Haskell**, **Prolog**, **Python**, **NLP**, **machine learning**, **computer vision**, **video retrieval**, **YOLO**, **CLIP**, **SQL**, **Linux**, and **networking** basics — coursework depth. Shipped product work: [[VibeCleaner]], [[Outlier.AI]], [[Hegelmann Group]], [[ZettelLinker]], [[Yapper]].
 
 <details class="course-panel">
 <summary>Programming languages &amp; paradigms</summary>

@@ -69,7 +69,7 @@ export async function renderLanding(
           </div>
         </div>
         <h1 class="hero-title">Hi, I’m Vladimir.</h1>
-        <p class="hero-sub">I’m an AI engineer. I build tools that make notes and documents <strong>searchable by meaning</strong>, and I test AI so its <strong>answers can be trusted</strong>. Most of what I make starts as a problem in my own work.</p>
+        <p class="hero-sub">I’m an AI engineer. I build harnesses that turn <strong>AI-generated code into production software</strong>, tools that make notes <strong>searchable by meaning</strong>, and evals that prove an AI’s output holds up.</p>
         <div class="hero-cta">
           <a class="btn btn-primary btn-lg" href="${CALENDLY_URL}" target="_blank" rel="noopener">Schedule a call with me</a>
           <button class="btn btn-lg" data-copy="${EMAIL}">Copy my email</button>
@@ -84,8 +84,8 @@ export async function renderLanding(
     </section>
 
     <section class="about">
-      <p>I’ve been programming for over seven years. At Outlier.AI I worked on post-training alignment for frontier coding and reasoning models — auditing multi-step chains of thought and authoring the production-grade Python code the models were trained to learn from. Now at Hegelmann Group I built an AI agent workflow that collects leads and prepares prospect lists — work that used to be done by hand.</p>
-      <p>Outside work I keep everything in an Obsidian notes vault, and most of my projects grew out of it — this website included. I speak Russian, English and Czech.</p>
+      <p>I’ve been programming for over seven years. At Outlier.AI I audited frontier coding models, caught reward hacking and broken reasoning, and wrote the Python reference code they trained on. That experience led to <a href="${noteHref('Projects/VibeCleaner')}">VibeCleaner</a>, a pre-ship cleanup and repair harness that turns messy AI-generated repos into production-ready code. At Hegelmann Group I built an AI agent workflow that collects leads and prepares prospect lists.</p>
+      <p>Outside work I keep everything in an Obsidian notes vault, and most of my other projects grew out of it, including this website. I speak Russian, English and Czech.</p>
     </section>
 
     <section class="section" id="work">

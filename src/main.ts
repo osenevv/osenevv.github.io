@@ -307,7 +307,7 @@ async function updatePalette() {
   const seq = ++searchSeq;
   const titles = q
     ? vault.notes.map((n) => ({ n, s: Math.max(fuzzy(q, n.name), fuzzy(q, n.title)) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 4)
-    : vault.notes.filter((n) => ['ZettelLinker', 'Yapper', 'Outlier.AI', 'Match a job description'].includes(n.name)).map((n) => ({ n, s: 1 }));
+    : vault.notes.filter((n) => ['VibeCleaner', 'ZettelLinker', 'Yapper', 'Outlier.AI', 'Match a job description'].includes(n.name)).map((n) => ({ n, s: 1 }));
   if (q.length > 2) index.ensureSemanticUpgrade();
   const hits = q.length > 2 ? await index.search(q, 6) : [];
   if (seq !== searchSeq) return;
