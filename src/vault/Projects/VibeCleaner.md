@@ -3,7 +3,7 @@ type: project
 featured: true
 order: 4
 kind: AI security & evals
-summary: Pre-ship security and anti-slop scanner for AI-generated Python, TypeScript, and Supabase apps, pairing a local tree-sitter gate with semantic checks.
+summary: Pre-ship security and anti-slop harness for AI-generated Python, TypeScript, and Supabase apps, pairing a local tree-sitter gate with semantic checks.
 flow: Repo or PR diff > tree-sitter AST gate ($0, <1 s) > gemini-decision-1 checks > Fix Prompt & SARIF > agent autofix
 proof: Layer 1 <1 s ($0) · 1.00 F1 / 0.00 FPR offline blind set · GitHub Action + SARIF · pytest + Hypothesis
 usecase: You build with coding agents and want to catch leaked keys, missing Supabase RLS, open write routes, prompt injection, and AI code slop before pushing.
