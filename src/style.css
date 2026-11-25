@@ -1004,43 +1004,89 @@ kbd {
   object-fit: contain;
   object-position: top center;
 }
-.project-head .case-decision {
-  margin-top: 4px;
+.note-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+.note-header .inline-title {
+  margin: 0;
+}
+.repo-btn {
+  flex: none;
+  border-color: rgba(127, 109, 242, 0.45);
+  background: rgba(127, 109, 242, 0.12);
+  color: var(--text-normal);
+}
+.repo-btn:hover {
+  border-color: var(--interactive-accent);
+  background: rgba(127, 109, 242, 0.22);
+}
+.project-head {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 24px;
+}
+.project-brief {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background: var(--background-secondary);
 }
 .usecase {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
   margin: 0;
-  padding: 14px 16px;
-  border-radius: var(--radius-m);
-  background: var(--background-primary);
+  padding: 0;
+}
+@media (max-width: 680px) {
+  .usecase {
+    grid-template-columns: 1fr;
+  }
 }
 .usecase dt {
   color: var(--text-accent);
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .usecase dd {
-  margin: 2px 0 0;
-  font-size: 15px;
-  line-height: 1.5;
+  margin: 5px 0 0;
+  color: var(--text-normal);
+  font-size: 14.5px;
+  line-height: 1.55;
 }
 .case-decision {
   margin: 0;
-  padding-left: 14px;
-  border-left: 2px solid var(--interactive-accent);
+  padding-top: 14px;
+  border-top: 1px solid var(--background-modifier-border);
   color: var(--text-muted);
-  font-size: 15px;
-  max-width: 62ch;
+  font-size: 14.5px;
+  line-height: 1.55;
 }
-.case-decision span {
+.case-decision p {
+  margin: 4px 0 0;
+}
+.case-decision span,
+.project-brief-label {
   display: block;
-  margin-bottom: 2px;
-  color: var(--text-normal);
+  color: var(--text-faint);
+  font-size: 11.5px;
   font-weight: 600;
-  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.project-brief-row {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--background-modifier-border);
 }
 .case-links {
   display: flex;
@@ -1059,8 +1105,7 @@ kbd {
   gap: 12px;
 }
 .case-has-shot .proof {
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12.5px;
 }
 .case-shot {
   display: block;
@@ -1085,39 +1130,50 @@ kbd {
   margin: 20px 0 0;
 }
 .proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.proof li {
+  padding: 4px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.4;
 }
 .also-title {
   margin: 40px 0 0;
   font-size: 1rem;
   color: var(--text-muted);
 }
-.project-head {
-  display: grid;
-  gap: 16px;
-  margin: 0 0 24px;
-}
 
-/* How-it-works flow: the step chain readers scan instead of the write-up */
+/* How-it-works flow: structured step chips */
 .flow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
   counter-reset: step;
 }
 .flow li {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
+  gap: 7px;
+  padding: 5px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
   line-height: 1.3;
 }
 .flow li::before {
@@ -1128,16 +1184,11 @@ kbd {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--interactive-accent);
-  color: #fff;
+  background: rgba(127, 109, 242, 0.2);
+  color: var(--text-accent);
   font-size: 11px;
   font-weight: 600;
   flex: none;
-}
-.flow li:not(:last-child)::after {
-  content: '→';
-  color: var(--text-faint);
-  margin-left: 2px;
 }
 
 .other-projects {

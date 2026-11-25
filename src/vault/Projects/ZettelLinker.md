@@ -1,7 +1,7 @@
 ---
 type: project
 featured: true
-order: 2
+order: 1
 kind: AI search
 summary: Reads your Obsidian vault, scores notes by semantic similarity, and suggests wikilinks you missed — all on-device, no API keys.
 flow: Notes > local embeddings > similarity rank > suggested wikilinks > undoable write-back

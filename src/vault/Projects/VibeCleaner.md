@@ -1,6 +1,5 @@
 ---
 type: project
-featured: true
 order: 1
 kind: AI security & evals
 summary: Turns messy AI-generated repos into production-ready code. Deletes provable code and UI slop, probes live behavior, and repairs bugs on isolated git worktrees.

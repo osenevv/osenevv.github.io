@@ -213,7 +213,10 @@ async function renderReader(note: Note) {
       <article class="note">
         <a class="back-link" href="#/">← Back to overview</a>
         <div class="breadcrumb">${esc(folderLabel)}</div>
-        <h1 class="inline-title">${esc(note.title)}</h1>
+        <div class="note-header">
+          <h1 class="inline-title">${esc(note.title)}</h1>
+          ${note.props.type === 'project' && note.props.repo ? repoLink(note) : ''}
+        </div>
         ${summary ? `<p class="note-summary">${esc(summary)}</p>` : ''}
         ${
           note.props.type === 'project'
@@ -223,11 +226,12 @@ async function renderReader(note: Note) {
                     ? `<div class="project-hero-frame"><img class="case-shot project-hero-shot" src="${esc(note.props.image as string)}" alt="${esc(note.name)} screenshot" loading="lazy" decoding="async" /></div>`
                     : ''
                 }
-                ${useCaseHtml(note)}
-                ${note.props.tradeoff ? `<p class="case-decision"><span>Why I built it this way</span>${esc(note.props.tradeoff as string)}</p>` : ''}
-                ${flowHtml(note)}
-                ${proofHtml(note)}
-                ${note.props.repo ? `<div class="case-links">${repoLink(note)}</div>` : ''}
+                <div class="project-brief">
+                  ${useCaseHtml(note)}
+                  ${note.props.tradeoff ? `<div class="case-decision"><span>Why I built it this way</span><p>${esc(note.props.tradeoff as string)}</p></div>` : ''}
+                  ${flowHtml(note) ? `<div class="project-brief-row"><span class="project-brief-label">How it works</span>${flowHtml(note)}</div>` : ''}
+                  ${proofHtml(note) ? `<div class="project-brief-row">${proofHtml(note)}</div>` : ''}
+                </div>
               </div>`
             : ''
         }
@@ -277,7 +281,7 @@ function renderRelated(noteId: string) {
   if (!el) return;
   el.innerHTML = index
     .related(noteId, 5)
-    .map((r) => noteLink(r.id, r.linked ? '' : '<span class="badge" title="Similar in meaning, but not linked yet">new link</span>'))
+    .map((r) => noteLink(r.id))
     .join('');
 }
 

@@ -24,11 +24,11 @@ export const flowHtml = (n: Note) => {
 
 export const proofHtml = (n: Note) => {
   const items = prop(n, 'proof').split('·').map((s) => s.trim()).filter(Boolean);
-  return items.length ? `<p class="proof">${items.map(esc).join('<span aria-hidden="true"> · </span>')}</p>` : '';
+  return items.length ? `<ul class="proof" aria-label="Highlights">${items.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>` : '';
 };
 
 export const repoLink = (n: Note) =>
-  n.props.repo ? `<a class="btn btn-sm" href="https://${esc(prop(n, 'repo'))}" target="_blank" rel="noopener">Code on GitHub ↗</a>` : '';
+  n.props.repo ? `<a class="btn btn-sm repo-btn" href="https://${esc(prop(n, 'repo'))}" target="_blank" rel="noopener">Code on GitHub</a>` : '';
 
 export const useCaseHtml = (n: Note) =>
   n.props.usecase
